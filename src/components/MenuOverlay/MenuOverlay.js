@@ -64,7 +64,9 @@ function MenuOverlay() {
   const isCreatePortfolioButtonEnabled = !useSelector((state) => selectors.isElementDisabled(state, DataElements.CREATE_PORTFOLIO_BUTTON)) && core.isFullPDFEnabled();
 
   const closeMenuOverlay = useCallback(() => dispatch(actions.closeElements([DataElements.MENU_OVERLAY])), [dispatch]);
-
+  
+  const isAdminUser = !!core.getIsAdminUser();
+  
   useEffect(() => {
     const onDocumentLoaded = () => {
       const type = core.getDocument()?.getType();
@@ -81,8 +83,12 @@ function MenuOverlay() {
     closeMenuOverlay();
     print(dispatch, isEmbedPrintSupported, sortStrategy, colorMap, { isGrayscale: core.getDocumentViewer().isGrayscaleModeEnabled(), timezone });
   };
+  const handleRepairButtonClick = () => {
+    closeMenuOverlay();
+    core.getDocumentViewer().trigger('repairRequested')
+  };
 
-  const downloadDocument = () => {
+    const downloadDocument = () => {
     downloadPdf(dispatch);
   };
 
@@ -178,6 +184,17 @@ function MenuOverlay() {
           role="option"
           onClick={handlePrintButtonClick}
         />
+        {isAdminUser && (
+          <ActionButton 
+            dataElement="repairPdfButton"
+            className="row"
+            img="icon-wrench"
+            label={t('action.repair')}
+            ariaLabel={t('action.repair')}
+            role="option"
+            onClick={handleRepairButtonClick}
+          />
+        )}
       </InitialMenuOverLayItem>
       <div className="divider"></div>
       {isCreatePortfolioButtonEnabled && (

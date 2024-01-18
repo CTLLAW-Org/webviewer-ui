@@ -42,6 +42,8 @@ function NotesPanelHeader({
     ],
     shallowEqual
   );
+  const annotationManager = core.getAnnotationManager();
+  const annotationsExist = !!annotationManager.getAnnotationsList().length;
 
   const [t] = useTranslation();
   const dispatch = useDispatch();
@@ -147,7 +149,7 @@ function NotesPanelHeader({
               filterAnnotationButton: true,
               active: filterEnabled
             })}
-            disabled={disableFilterAnnotation}
+            disabled={!annotationsExist}
             img="icon-comments-filter"
             onClick={() => dispatch(actions.openElement('filterModal'))}
             title={t('component.filter')}

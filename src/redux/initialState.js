@@ -774,6 +774,7 @@ export default {
       { dataElement: 'saveAsButton' },
       { dataElement: 'printButton' },
       { dataElement: 'themeChangeButton' },
+      { dataElement: 'repairPdfButton' },
       { dataElement: 'languageButton' },
     ],
     pageManipulationOverlay: [

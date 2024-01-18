@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import NotePopup from 'components/NotePopup';
 import NoteState from 'components/NoteState';
+import NoteAccessState from 'components/NoteAccessState';
+import NoteSharedWithCount from "components/NoteSharedWithCount";
 import Icon from 'components/Icon';
 import NoteUnpostedCommentIndicator from 'components/NoteUnpostedCommentIndicator';
 import getLatestActivityDate from 'helpers/getLatestActivityDate';
@@ -123,6 +125,7 @@ function NoteHeader(props) {
                   <Icon className="num-reply-icon" glyph={'icon-chat-bubble'} />
                   <div className="num-replies">{numberOfReplies}</div>
                 </div>}
+                <NoteSharedWithCount annotation={annotation} />
             </div>
           </div>
           <div className="state-and-overflow">
@@ -137,13 +140,15 @@ function NoteHeader(props) {
                 }}
               />}
             <NoteUnpostedCommentIndicator annotationId={annotation.Id} />
-            {!isNoteStateDisabled && !isReply && !isMultiSelectMode && !isGroupMember &&
+            <NoteAccessState annotation={annotation} />
+
+              {!isNoteStateDisabled && !isReply && !isMultiSelectMode && !isGroupMember &&
               <NoteState
                 annotation={annotation}
                 isSelected={isSelected}
               />
             }
-            {!isEditing && isSelected && !isMultiSelectMode && !isGroupMember &&
+            {!isEditing && !isMultiSelectMode && !isGroupMember &&
               <NotePopup
                 noteIndex={noteIndex}
                 annotation={annotation}

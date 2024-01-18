@@ -10,11 +10,13 @@ import './NotePopup.scss';
 
 const propTypes = {
   handleEdit: PropTypes.func,
-  handleDelete: PropTypes.func,
+  handleDelete: PropTypes.func, 
+  handleShare: PropTypes.func,
   closePopup: PropTypes.func,
   openPopup: PropTypes.func,
   isEditable: PropTypes.bool,
   isDeletable: PropTypes.bool,
+  isShareable: PropTypes.bool,
   isOpen: PropTypes.bool,
 };
 
@@ -24,10 +26,12 @@ function NotePopup(props) {
   const {
     handleEdit = noop,
     handleDelete = noop,
+    handleShare = noop,
     closePopup = noop,
     openPopup = noop,
     isEditable,
     isDeletable,
+    isShareable,
     isOpen,
     isReply,
   } = props;
@@ -59,7 +63,12 @@ function NotePopup(props) {
     handleDelete();
   }
 
-  if (!isEditable && !isDeletable) {
+  function onShareButtonClick() {
+    closePopup();
+    handleShare();
+  }
+
+  if (!isEditable && !isDeletable && !isShareable) {
     return null;
   }
 
@@ -76,6 +85,16 @@ function NotePopup(props) {
       </div>
       {isOpen && (
         <div className={optionsClass}>
+          {isShareable && (
+            <DataElementWrapper
+              type="button"
+              className="option note-popup-option"
+              dataElement="notePopupShare"
+              onClick={onShareButtonClick}
+            >
+              {t('action.share')}
+            </DataElementWrapper>
+          )}
           {isEditable && (
             <DataElementWrapper
               type="button"

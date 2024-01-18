@@ -42,18 +42,31 @@ function NotePopupContainer(props) {
   const handleDelete = React.useCallback(() => {
     core.deleteAnnotations([annotation, ...annotation.getGroupedChildren()], undefined, activeDocumentViewerKey);
   }, [annotation]);
-
+  
+  const handleShare = React.useCallback(function handleShare() {
+    core.getAnnotationManager().trigger('annotationShareRequested', annotation);
+  },[annotation]);
+  
   const openPopup = () => setIsOpen(true);
   const closePopup = () => setIsOpen(false);
 
   const isEditable = canModifyContents;
   const isDeletable = canModify && !annotation?.NoDelete;
+  const isShareable = (
+    (isEditable || isDeletable) &&
+    annotation &&
+    !annotation.isReply() &&
+    !!annotation.getCustomData('isPrivate') &&
+    (annotation.Author === core.getCurrentUser())
+  );
 
   const passProps = {
     handleEdit,
     handleDelete,
+    handleShare,
     isEditable,
-    isDeletable,
+    isDeletable, 
+    isShareable,
     isOpen,
     closePopup,
     openPopup,
