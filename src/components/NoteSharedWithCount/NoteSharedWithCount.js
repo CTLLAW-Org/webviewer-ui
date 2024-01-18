@@ -35,7 +35,7 @@ function NoteSharedWithCount(props) {
             (annotation.Author === core.getCurrentUser())
         ) {
             // We're emitting this event from PdfPreview component in Nucleus
-            core.getAnnotationManager().on('annotationSharedWithCountChanged', (changedAnnotation, changedSharedWithCount) => {
+            core.getAnnotationManager().addEventListener('annotationSharedWithCountChanged', (changedAnnotation, changedSharedWithCount) => {
                 if (changedAnnotation.Id === annotation.Id) {
                     const newSharedWithCount = parseInt(changedSharedWithCount);
                     sharedWithCount = newSharedWithCount;
@@ -45,7 +45,7 @@ function NoteSharedWithCount(props) {
             });
         }
 
-        core.getAnnotationManager().on('annotationAccessStateChanged', (changedAnnotation, annotationIsPrivate) => {
+        core.getAnnotationManager().addEventListener('annotationAccessStateChanged', (changedAnnotation, annotationIsPrivate) => {
             if (changedAnnotation.Id === annotation.Id) {
                 setAnnotationIsPrivate(annotationIsPrivate);
             }
