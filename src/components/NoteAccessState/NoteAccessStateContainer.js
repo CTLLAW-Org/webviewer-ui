@@ -7,7 +7,6 @@ const propTypes = {
 };
 
 function NoteAccessStateContainer(props) {
-  console.log(props);
   return (
     <NoteAccessState {...props}/>
   );
