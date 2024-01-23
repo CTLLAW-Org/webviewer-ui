@@ -56,7 +56,7 @@ function NotePopupContainer(props) {
     (isEditable || isDeletable) &&
     annotation &&
     !annotation.isReply() &&
-    !!annotation.getCustomData('isPrivate') &&
+    annotation.getCustomData('isPrivate') === 'true' &&
     (annotation.Author === core.getCurrentUser())
   );
 

@@ -24,7 +24,7 @@ function NoteSharedWithCount(props) {
     }
 
     let [sharedWithCount, setSharedWithCount] = useState(parsedSharedWithCount);
-    const [annotationIsPrivate, setAnnotationIsPrivate] = useState(!!annotation.getCustomData('isPrivate'));
+    const [annotationIsPrivate, setAnnotationIsPrivate] = useState(annotation.getCustomData('isPrivate') === 'true');
 
     if (!watchersAreSet) {
         setWatchersAreSet(true);

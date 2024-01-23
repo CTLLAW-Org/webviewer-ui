@@ -16,8 +16,7 @@ function NoteAccessState(props) {
     annotation
   } = props;
 
-  const [annotationIsPrivate, setAnnotationIsPrivate] = useState(!!annotation.getCustomData('isPrivate'));
-
+  const [annotationIsPrivate, setAnnotationIsPrivate] = useState(annotation.getCustomData('isPrivate') === 'true');
   const toggleAnnotationAccessState = (event, annotation) => {
     event.stopPropagation();
     const annotationManager = core.getAnnotationManager();
