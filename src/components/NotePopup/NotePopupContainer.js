@@ -42,11 +42,11 @@ function NotePopupContainer(props) {
   const handleDelete = React.useCallback(() => {
     core.deleteAnnotations([annotation, ...annotation.getGroupedChildren()], undefined, activeDocumentViewerKey);
   }, [annotation]);
-  
+
   const handleShare = React.useCallback(function handleShare() {
     core.getAnnotationManager().trigger('annotationShareRequested', annotation);
   },[annotation]);
-  
+
   const openPopup = () => setIsOpen(true);
   const closePopup = () => setIsOpen(false);
 
@@ -59,26 +59,43 @@ function NotePopupContainer(props) {
     annotation.getCustomData('isPrivate') === 'true' &&
     (annotation.Author === core.getCurrentUser())
   );
+  const isReply = annotation.isReply();
+
+  /*console.error('---------');
+  console.error('Note Popup Container');
+  console.error('editable', isEditable);
+  console.error('deletable', isDeletable);
+  console.error('annotation', annotation);
+  console.error('is reply', annotation?.isReply());
+  console.error('is private', annotation?.getCustomData('isPrivate'));
+  console.error('annotation author', annotation?.Author);
+  console.error('core current user', core.getCurrentUser());
+  console.error('----------');*/
 
   const passProps = {
     handleEdit,
     handleDelete,
     handleShare,
     isEditable,
-    isDeletable, 
+    isDeletable,
     isShareable,
     isOpen,
+    isReply,
     closePopup,
     openPopup,
   };
 
   // We wrap the element in a div so the tooltip works properly
-  return (
+  /*return (
     <Tooltip content={t('formField.formFieldPopup.options')}>
       <div>
         <NotePopup {...props} {...passProps} />
       </div>
     </Tooltip>
+  );*/
+
+  return (
+    <NotePopup {...props} {...passProps} />
   );
 }
 
