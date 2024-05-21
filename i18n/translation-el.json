@@ -72,6 +72,7 @@
     "type": "Τύπος",
     "upload": "Μεταφόρτωση",
     "link": "Σύνδεσμος",
+    "unlink": "Διαγραφή συνδέσμου",
     "fileAttachmentDownload": "Κατεβάστε το συνημμένο αρχείο",
     "prevResult": "Προηγούμενο αποτέλεσμα",
     "nextResult": "Επόμενο αποτέλεσμα",
@@ -82,6 +83,8 @@
     "exit": "Εξοδος",
     "addOption": "Προσθήκη Επιλογής",
     "formFieldEdit": "Επεξεργασία πεδίου φόρμας",
+    "formFieldEditMode": "Επεξεργασία πεδίων φόρμας",
+    "contentEditMode": "Επεξεργασία Περιεχομένου",
     "viewShortCutKeysFor3D": "Προβολή πλήκτρων συντόμευσης",
     "markAllRead": "Επισήμανση όλων ως αναγνωσμένων",
     "pageInsertion": "Εισαγωγή σελίδας",
@@ -122,7 +125,10 @@
     "clearSignature": "Καθαρή υπογραφή",
     "newDocument": "Νέο Έγγραφο",
     "sideBySideView": "Άποψη δίπλα δίπλα",
-    "pageNumberInput": "Εισαγωγή αριθμού σελίδας"
+    "pageNumberInput": "Εισαγωγή αριθμού σελίδας",
+    "addNewColor": "Προσθήκη νέου χρώματος",
+    "deleteColor": "Διαγραφή επιλεγμένου χρώματος",
+    "copySelectedColor": "Αντιγραφή επιλεγμένου χρώματος"
   },
   "annotation": {
     "areaMeasurement": "Περιοχή",
@@ -284,9 +290,6 @@
     "linkURLorPage": "URL σύνδεσης ή σελίδας",
     "warning": "Προειδοποίηση",
     "svgMalicious": "Το σενάριο SVG αγνοήθηκε για ασφάλεια",
-    "enterContentEditingMode": "Πρόκειται να μπείτε σε λειτουργία επεξεργασίας περιεχομένου.",
-    "existingAnnotationWarning": "Οι υπάρχοντες σχολιασμοί ενδέχεται να μην ταιριάζουν με το κείμενο μετά την επεξεργασία του.",
-    "changesCannotBeUndone": "Τυχόν αλλαγές που έγιναν δεν μπορούν να αναιρεθούν.",
     "doNotShowAgain": "Μην μου το ξαναδείξεις αυτό",
     "doNotAskAgain": "Μην ξαναρωτήσεις",
     "enterReplacementText": "Εισαγάγετε το κείμενο που θέλετε να αντικαταστήσετε",
@@ -295,6 +298,8 @@
     "unpostedComment": "Μη αναρτημένο σχόλιο",
     "lockedLayer": "Το στρώμα είναι κλειδωμένο",
     "layerVisibililtyNoChange": "Η ορατότητα του στρώματος δεν μπορεί να αλλάξει",
+    "noLayers": "Αυτό το έγγραφο δεν έχει επίπεδα.",
+    "noSignatureFields": "Αυτό το έγγραφο δεν έχει πεδία υπογραφής.",
     "untitled": "Χωρίς τίτλο",
     "selectHowToLoadFile": "Επιλέξτε πώς να φορτώσετε το έγγραφό σας",
     "openFileByUrl": "Άνοιγμα αρχείου κατά διεύθυνση URL:",
@@ -366,6 +371,10 @@
     },
     "colorPalette": {
       "colorLabel": "Χρώμα"
+    },
+    "colorPalettePicker": {
+      "addColor": "Προσθέστε νέο χρώμα",
+      "selectColor": "Επιλέξτε χρώμα"
     },
     "displayMode": {
       "layout": "Διάταξη σελίδας",
@@ -509,6 +518,9 @@
       "radius": "Ακτίνα κύκλου",
       "count": "μετρώ",
       "length": "Μήκος"
+    },
+    "freeTextOption": {
+      "autoSizeFont": "Κλιμάκωση μεγέθους γραμματοσειράς δυναμικά"
     },
     "measurementOption": {
       "scale": "Κλίμακα"
@@ -702,6 +714,7 @@
       "redoChange": "Επαναλάβετε μια αλλαγή σχολιασμού",
       "openFile": "Ανοίξτε το εργαλείο επιλογής αρχείων",
       "openSearch": "Ανοίξτε την επικάλυψη αναζήτησης",
+      "zoomOptions": "Επιλογές ζουμ",
       "zoomIn": "Μεγέθυνση",
       "zoomOut": "Σμίκρυνση",
       "fitScreenWidth": "Τοποθετήστε το έγγραφο στο πλάτος της οθόνης σε μια μικρή οθόνη (< 640 px), διαφορετικά προσαρμόστε το στο αρχικό του μέγεθος",
@@ -768,6 +781,9 @@
       "deleteTitle": "Διαγραφή προσαρμοσμένου χρώματος",
       "deleteMessage": "Διαγραφή του επιλεγμένου προσαρμοσμένου χρώματος; Θα αφαιρεθεί από την χρωματική σας παλέτα."
     },
+    "colorPalettePicker": {
+      "deleteTitle": "Διαγραφή προσαρμοσμένου χρώματος"
+    },
     "multiDeleteAnnotation": {
       "title": "Διαγραφή σχολιασμών;",
       "message": "Η διαγραφή θα καταργήσει όλα τα σχόλια, τις απαντήσεις και την ομαδοποίηση και δεν μπορεί να αναιρεθεί.\n\n Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτούς τους σχολιασμούς;"
@@ -800,7 +816,7 @@
     "select": "(Esc)",
     "signature": "(ΜΙΚΡΟ)",
     "squiggly": "(ΣΟΛ)",
-    "image": "(ΕΓΩ)",
+    "image": "(I)",
     "redo": "(Ctrl Shift Z)",
     "redo_windows": "(Ctrl Y)",
     "undo": "(Ctrl Z)",
@@ -1165,6 +1181,22 @@
     "increaseIndent": "Αύξηση εσοχής",
     "insertLink": "Εισαγωγή συνδέσμου",
     "insertImage": "Εισαγωγή εικόνας",
+    "table": "Τραπέζι",
+    "insertRowAbove": "Εισαγάγετε τη σειρά πάνω",
+    "insertRowBelow": "Εισαγάγετε τη σειρά παρακάτω",
+    "insertColumnRight": "Εισαγωγή στήλης δεξιά",
+    "insertColumnLeft": "Εισαγωγή στήλης αριστερά",
+    "deleteRow": "Διαγραφή σειράς",
+    "deleteColumn": "Διαγραφή στήλης",
+    "deleteTable": "Διαγραφή πίνακα",
+    "deleted": "Διαγράφηκε:",
+    "added": "Προστέθηκε:",
+    "editing": "Επεξεργασία",
+    "editingDescription": "Επεξεργασία εγγράφου",
+    "reviewing": "Αναθεώρηση",
+    "reviewingDescription": "Κάνω προτάσεις",
+    "viewOnly": "Μόνο προβολή",
+    "viewOnlyDescription": "Προβολή χωρίς προτάσεις",
     "notSupportedOnMobile": "Η επεξεργασία του Office δεν υποστηρίζεται σε κινητές συσκευές."
   },
   "insertPageModal": {
@@ -1259,8 +1291,34 @@
   },
   "stylePanel": {
     "headings": {
-      "styles": "Στυλ"
+      "styles": "Στυλ",
+      "annotation": "Σχόλιο",
+      "annotations": "Σχολιασμοί",
+      "tool": "Εργαλείο",
+      "textStyles": "Στυλ κειμένου",
+      "currentColor": "Τρέχον χρώμα",
+      "customColors": "Προσαρμοσμένα χρώματα",
+      "redactionTextLabel": "Ετικέτα κειμένου",
+      "redactionMarkOutline": "Σημειώστε το περίγραμμα",
+      "redactionFill": "Χρώμα επεξεργασίας",
+      "redactionTextPlaceholder": "Εισαγωγή ετικέτας κειμένου",
+      "contentEdit": "Επεξεργασία περιεχομένου"
     },
-    "noToolSelected": "Επιλέξτε ένα εργαλείο για να δείτε τις ιδιότητες του εργαλείου"
+    "addColorToCustom": "Προσθήκη στα προσαρμοσμένα χρώματα",
+    "noToolSelected": "Επιλέξτε ένα εργαλείο για να δείτε τις ιδιότητες του εργαλείου",
+    "noToolStyle": "Το εργαλείο δεν περιέχει ιδιότητες styling."
+  },
+  "signatureListPanel": {
+    "header": "Λίστα υπογραφών",
+    "newSignature": "Νέα υπογραφή",
+    "newSignatureAndInitial": "Νέα Υπογραφή & Αρχικό",
+    "signatureList": {
+      "signature": "Υπογραφή",
+      "initials": "Αρχικά"
+    }
+  },
+  "rubberStampPanel": {
+    "header": "Γραμματόσημα",
+    "standard": "Πρότυπα γραμματόσημα"
   }
 }

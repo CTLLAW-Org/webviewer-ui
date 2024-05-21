@@ -8,12 +8,10 @@ import RibbonGroup from '../RibbonGroup';
 import ToolGroupButton from '../ToolGroupButton';
 import ToggleElementButton from '../ToggleElementButton';
 import ZoomControls from '../ZoomControls';
-import GroupedTools from '../GroupedTools';
 import ToolButton from '../ToolButton';
 import PageControls from '../PageControls';
 import PresetButton from '../PresetButton';
 import ViewControls from '../ViewControls';
-import MainMenu from '../MainMenu';
 
 const InnerItem = (props) => {
   const { type, dataElement, headerDirection, headerPlacement } = props;
@@ -36,8 +34,6 @@ const InnerItem = (props) => {
       return <RibbonGroup key={key} {...props} />;
     case ITEM_TYPE.TOOL_GROUP_BUTTON:
       return <ToolGroupButton key={key} {...props} />;
-    case ITEM_TYPE.GROUPED_TOOLS:
-      return <GroupedTools key={key} uniqueID={key} {...props} headerDirection={headerDirection} />;
     case ITEM_TYPE.ZOOM:
       return <ZoomControls {...props} />;
     case ITEM_TYPE.TOOL_BUTTON:
@@ -48,8 +44,6 @@ const InnerItem = (props) => {
       return <PresetButton key={key} {...props} />;
     case ITEM_TYPE.VIEW_CONTROLS:
       return <ViewControls key={key} {...props} />;
-    case ITEM_TYPE.MENU:
-      return <MainMenu key={key} {...props} />;
     default:
       console.warn(`${type} is not a valid item type.`);
       return null;

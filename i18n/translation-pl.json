@@ -72,6 +72,7 @@
     "type": "Rodzaj",
     "upload": "Wgraj",
     "link": "Połączyć",
+    "unlink": "Usuń łącze",
     "fileAttachmentDownload": "Pobierz załączony plik",
     "prevResult": "Poprzedni wynik",
     "nextResult": "Następny wynik",
@@ -82,6 +83,8 @@
     "exit": "Wyjdź",
     "addOption": "Dodaj opcję",
     "formFieldEdit": "Edytuj pole formularza",
+    "formFieldEditMode": "Edytuj pola formularza",
+    "contentEditMode": "Edytuj treść",
     "viewShortCutKeysFor3D": "Wyświetl klawisze skrótów",
     "markAllRead": "Oznacz wszystkie jako przeczytane",
     "pageInsertion": "Wstawianie strony",
@@ -122,7 +125,10 @@
     "clearSignature": "Wyraźny podpis",
     "newDocument": "Nowy dokument",
     "sideBySideView": "Widok obok siebie",
-    "pageNumberInput": "Wprowadzanie numeru strony"
+    "pageNumberInput": "Wprowadzanie numeru strony",
+    "addNewColor": "Dodaj nowy kolor",
+    "deleteColor": "Usuń wybrany kolor",
+    "copySelectedColor": "Skopiuj wybrany kolor"
   },
   "annotation": {
     "areaMeasurement": "Pomiar powierzchni",
@@ -284,9 +290,6 @@
     "linkURLorPage": "Adres URL linku lub strony",
     "warning": "Ostrzeżenie",
     "svgMalicious": "Skrypt SVG został zignorowany ze względów bezpieczeństwa",
-    "enterContentEditingMode": "Masz zamiar wejść w tryb edycji treści.",
-    "existingAnnotationWarning": "Istniejące adnotacje mogą nie pasować do tekstu po jego edycji.",
-    "changesCannotBeUndone": "Wprowadzonych zmian nie można cofnąć.",
     "doNotShowAgain": "Nie pokazuj mi tego ponownie",
     "doNotAskAgain": "Nie pytaj ponownie",
     "enterReplacementText": "Wpisz tekst, który chcesz zastąpić",
@@ -295,6 +298,8 @@
     "unpostedComment": "Nieopublikowany komentarz",
     "lockedLayer": "Warstwa jest zablokowana",
     "layerVisibililtyNoChange": "Widoczności warstwy nie można zmienić",
+    "noLayers": "Ten dokument nie ma warstw.",
+    "noSignatureFields": "Dokument ten nie zawiera pól na podpis.",
     "untitled": "Nieuprawny",
     "selectHowToLoadFile": "Wybierz sposób ładowania dokumentu",
     "openFileByUrl": "Otwórz plik według adresu URL:",
@@ -366,6 +371,10 @@
     },
     "colorPalette": {
       "colorLabel": "Kolor"
+    },
+    "colorPalettePicker": {
+      "addColor": "Dodaj nowy kolor",
+      "selectColor": "Wybierz kolor"
     },
     "displayMode": {
       "layout": "Układ strony",
@@ -509,6 +518,9 @@
       "radius": "Promień",
       "count": "Policz",
       "length": "Długość"
+    },
+    "freeTextOption": {
+      "autoSizeFont": "Skaluj rozmiar czcionki dynamicznie"
     },
     "measurementOption": {
       "scale": "Skala"
@@ -702,6 +714,7 @@
       "redoChange": "Ponów zmianę adnotacji",
       "openFile": "Otwórz selektor plików",
       "openSearch": "Otwórz nakładkę wyszukiwania",
+      "zoomOptions": "Opcje powiększenia",
       "zoomIn": "Zbliżenie",
       "zoomOut": "Pomniejsz",
       "fitScreenWidth": "Dopasuj dokument do szerokości ekranu na małym ekranie (< 640px), w przeciwnym razie dopasuj go do oryginalnego rozmiaru",
@@ -767,6 +780,9 @@
     "colorPicker": {
       "deleteTitle": "Usuń kolor niestandardowy",
       "deleteMessage": "Usunąć wybrany kolor niestandardowy? Zostanie usunięty z Twojej palety kolorów."
+    },
+    "colorPalettePicker": {
+      "deleteTitle": "Usuń kolor niestandardowy"
     },
     "multiDeleteAnnotation": {
       "title": "Usunąć adnotacje?",
@@ -1165,6 +1181,22 @@
     "increaseIndent": "Zwiększ wcięcie",
     "insertLink": "Wstaw łącze",
     "insertImage": "Umieść obraz",
+    "table": "Tabela",
+    "insertRowAbove": "Wstaw wiersz powyżej",
+    "insertRowBelow": "Wstaw wiersz poniżej",
+    "insertColumnRight": "Wstaw kolumnę po prawej stronie",
+    "insertColumnLeft": "Wstaw kolumnę po lewej stronie",
+    "deleteRow": "Usuń wiersz",
+    "deleteColumn": "Usuń kolumnę",
+    "deleteTable": "Usuń tabelę",
+    "deleted": "Usunięto:",
+    "added": "Dodany:",
+    "editing": "Redagowanie",
+    "editingDescription": "Edytuj dokument",
+    "reviewing": "Przeglądanie",
+    "reviewingDescription": "Zasugeruj",
+    "viewOnly": "Tylko podgląd",
+    "viewOnlyDescription": "Zobacz bez sugestii",
     "notSupportedOnMobile": "Edycja pakietu Office nie jest obsługiwana na urządzeniach mobilnych."
   },
   "insertPageModal": {
@@ -1259,8 +1291,34 @@
   },
   "stylePanel": {
     "headings": {
-      "styles": "Style"
+      "styles": "Style",
+      "annotation": "Adnotacja",
+      "annotations": "Adnotacje",
+      "tool": "Narzędzie",
+      "textStyles": "Style tekstu",
+      "currentColor": "Aktualny kolor",
+      "customColors": "Niestandardowe kolory",
+      "redactionTextLabel": "Etykieta tekstowa",
+      "redactionMarkOutline": "Zarys Marka",
+      "redactionFill": "Kolor redakcji",
+      "redactionTextPlaceholder": "Wstaw etykietę tekstową",
+      "contentEdit": "Edycja treści"
     },
-    "noToolSelected": "Wybierz narzędzie, aby wyświetlić właściwości narzędzia"
+    "addColorToCustom": "Dodaj do niestandardowych kolorów",
+    "noToolSelected": "Wybierz narzędzie, aby wyświetlić właściwości narzędzia",
+    "noToolStyle": "Narzędzie nie zawiera żadnych właściwości stylizacji."
+  },
+  "signatureListPanel": {
+    "header": "Lista podpisów",
+    "newSignature": "Nowy podpis",
+    "newSignatureAndInitial": "Nowy podpis i inicjał",
+    "signatureList": {
+      "signature": "Podpis",
+      "initials": "Inicjały"
+    }
+  },
+  "rubberStampPanel": {
+    "header": "Znaczki",
+    "standard": "Standardowe znaczki"
   }
 }

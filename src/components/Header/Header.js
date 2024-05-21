@@ -19,18 +19,29 @@ class Header extends React.PureComponent {
     isInDesktopOnlyMode: PropTypes.bool,
     isToolsHeaderOpen: PropTypes.bool,
     isMultiTab: PropTypes.bool,
+    isOfficeEditorMode: PropTypes.bool,
     currentToolbarGroup: PropTypes.string,
   }
 
   render() {
-    const { isDisabled, activeHeaderItems, isOpen, isToolsHeaderOpen, currentToolbarGroup, isMultiTab, isToolGroupReorderingEnabled, isInDesktopOnlyMode } = this.props;
+    const {
+      isDisabled,
+      activeHeaderItems,
+      isOpen,
+      isToolsHeaderOpen,
+      currentToolbarGroup,
+      isMultiTab,
+      isToolGroupReorderingEnabled,
+      isInDesktopOnlyMode,
+      isOfficeEditorMode,
+    } = this.props;
 
     if (isDisabled || !isOpen) {
       return null;
     }
 
     return (
-      <React.Fragment>
+      <>
         <TabsHeader />
         <div
           className={classNames({
@@ -39,11 +50,16 @@ class Header extends React.PureComponent {
           })}
           data-element="header"
         >
-          <HeaderItems items={activeHeaderItems} isToolGroupReorderingEnabled={isToolGroupReorderingEnabled} isInDesktopOnlyMode={isInDesktopOnlyMode} />
+          <HeaderItems
+            items={activeHeaderItems}
+            isToolGroupReorderingEnabled={isToolGroupReorderingEnabled}
+            isInDesktopOnlyMode={isInDesktopOnlyMode}
+            isOfficeEditorMode={isOfficeEditorMode}
+          />
           {(!isToolsHeaderOpen || currentToolbarGroup === 'toolbarGroup-View') && !isMultiTab
           && <div className="view-header-border" />}
         </div>
-      </React.Fragment>
+      </>
     );
   }
 }
@@ -57,6 +73,7 @@ const mapStateToProps = (state) => ({
   activeHeaderItems: selectors.getActiveHeaderItems(state),
   isToolGroupReorderingEnabled: selectors.isToolGroupReorderingEnabled(state),
   isInDesktopOnlyMode: selectors.isInDesktopOnlyMode(state),
+  isOfficeEditorMode: selectors.getIsOfficeEditorMode(state),
 });
 
 export default connect(mapStateToProps)(Header);

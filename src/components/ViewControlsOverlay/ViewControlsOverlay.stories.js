@@ -17,13 +17,16 @@ const initialState = {
       viewControlsOverlay: true
     },
     customPanels: [],
-    customFlxPanels: [],
+    genericPanels: [],
   },
   document: {
     totalPages: {
       1: 1,
     }
-  }
+  },
+  featureFlags: {
+    customizableUI: false,
+  },
 };
 
 const store = configureStore({
@@ -45,7 +48,10 @@ const initialStateWithMultiTab = {
   viewer: {
     ...initialState.viewer,
     isMultiTab: true,
-  }
+  },
+  featureFlags: {
+    customizableUI: false,
+  },
 };
 
 const storeWithMultiTab = configureStore({

@@ -15,7 +15,8 @@ function NoteTextPreview(props) {
     resize,
     style,
     /* If text being previewed is a comment it gets a darker font color */
-    comment = false
+    comment = false,
+    beforeContent = () => {},
   } = props;
   const [expanded, setExpand] = useState(false);
   const [previewElementWidth, setPreviewWidth] = useState(null);
@@ -60,6 +61,7 @@ function NoteTextPreview(props) {
 
   return (
     <div className={noteTextPreviewClass} ref={ref} style={style}>
+      {beforeContent()}
       {renderRichText && richTextStyle ? renderRichText(textToDisplay, richTextStyle, 0) : textToDisplay} {showPrompt && <a className="note-text-preview-prompt" onClick={onClickHandler}>{prompt}</a>}
     </div>
   );

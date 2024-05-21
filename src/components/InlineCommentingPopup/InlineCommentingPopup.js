@@ -57,6 +57,11 @@ const InlineCommentingPopup = ({
           closeAndReset();
         }
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          closeAndReset();
+        }
+      }}
     >
       <div
         className={classNames({

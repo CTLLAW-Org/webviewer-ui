@@ -72,6 +72,7 @@
     "type": "Type",
     "upload": "Uploaden",
     "link": "Koppeling",
+    "unlink": "Koppeling verwijderen",
     "fileAttachmentDownload": "Download bijgevoegd bestand",
     "prevResult": "Vorig resultaat",
     "nextResult": "Volgend resultaat",
@@ -82,6 +83,8 @@
     "exit": "Uitgang",
     "addOption": "Optie toevoegen",
     "formFieldEdit": "Formulierveld bewerken",
+    "formFieldEditMode": "Formuliervelden bewerken",
+    "contentEditMode": "Inhoud bewerken",
     "viewShortCutKeysFor3D": "Bekijk sneltoetsen",
     "markAllRead": "Markeer alles als gelezen",
     "pageInsertion": "Pagina-invoeging",
@@ -122,7 +125,10 @@
     "clearSignature": "Duidelijke handtekening",
     "newDocument": "Nieuw document",
     "sideBySideView": "Zij aan zij weergave",
-    "pageNumberInput": "Invoer van paginanummer"
+    "pageNumberInput": "Invoer van paginanummer",
+    "addNewColor": "Nieuwe kleur toevoegen",
+    "deleteColor": "Geselecteerde kleur verwijderen",
+    "copySelectedColor": "Kopieer geselecteerde kleur"
   },
   "annotation": {
     "areaMeasurement": "Oppervlaktemeting",
@@ -284,9 +290,6 @@
     "linkURLorPage": "Link-URL of een pagina",
     "warning": "Waarschuwing",
     "svgMalicious": "SVG-script genegeerd om veiligheidsredenen",
-    "enterContentEditingMode": "U staat op het punt om naar de tekstbewerkingsmodus te gaan.",
-    "existingAnnotationWarning": "Bestaande annotaties komen mogelijk niet overeen met de tekst nadat deze is bewerkt.",
-    "changesCannotBeUndone": "Aangebrachte wijzigingen kunnen niet ongedaan worden gemaakt.",
     "doNotShowAgain": "laat mij dit niet meer zien",
     "doNotAskAgain": "Niet nogmaals vragen",
     "enterReplacementText": "Voer de tekst in die u wilt vervangen",
@@ -295,6 +298,8 @@
     "unpostedComment": "Niet-geplaatste reactie",
     "lockedLayer": "Laag is vergrendeld",
     "layerVisibililtyNoChange": "De zichtbaarheid van de laag kan niet worden gewijzigd",
+    "noLayers": "Dit document heeft geen lagen.",
+    "noSignatureFields": "Dit document heeft geen handtekeningvelden.",
     "untitled": "Ongetiteld",
     "selectHowToLoadFile": "Selecteer hoe u uw document wilt laden",
     "openFileByUrl": "Bestand openen op URL:",
@@ -366,6 +371,10 @@
     },
     "colorPalette": {
       "colorLabel": "Kleur"
+    },
+    "colorPalettePicker": {
+      "addColor": "Voeg nieuwe kleur toe",
+      "selectColor": "Selecteer kleur"
     },
     "displayMode": {
       "layout": "Layout",
@@ -509,6 +518,9 @@
       "radius": "Straal",
       "count": "Tel",
       "length": "Lengte"
+    },
+    "freeTextOption": {
+      "autoSizeFont": "Schaal de lettergrootte dynamisch"
     },
     "measurementOption": {
       "scale": "Schaal"
@@ -702,6 +714,7 @@
       "redoChange": "Voer een annotatiewijziging opnieuw uit",
       "openFile": "Open de bestandskiezer",
       "openSearch": "Open de zoekoverlay",
+      "zoomOptions": "Zoomopties",
       "zoomIn": "In zoomen",
       "zoomOut": "Uitzoomen",
       "fitScreenWidth": "Pas het document aan de schermbreedte aan in een klein scherm (< 640px), pas het anders aan aan de oorspronkelijke grootte",
@@ -767,6 +780,9 @@
     "colorPicker": {
       "deleteTitle": "Aangepaste kleur verwijderen",
       "deleteMessage": "De geselecteerde aangepaste kleur verwijderen? Het wordt verwijderd uit uw kleurenpalet."
+    },
+    "colorPalettePicker": {
+      "deleteTitle": "Aangepaste kleur verwijderen"
     },
     "multiDeleteAnnotation": {
       "title": "Annotaties verwijderen?",
@@ -1165,6 +1181,22 @@
     "increaseIndent": "Inspringing vergroten",
     "insertLink": "Koppeling invoegen",
     "insertImage": "Voeg afbeelding in",
+    "table": "Tafel",
+    "insertRowAbove": "Rij erboven invoegen",
+    "insertRowBelow": "Rij hieronder invoegen",
+    "insertColumnRight": "Kolom rechts invoegen",
+    "insertColumnLeft": "Kolom links invoegen",
+    "deleteRow": "Verwijder rij",
+    "deleteColumn": "Kolom verwijderen",
+    "deleteTable": "Tabel verwijderen",
+    "deleted": "Verwijderd:",
+    "added": "Toegevoegd:",
+    "editing": "Bewerken",
+    "editingDescription": "Document bewerken",
+    "reviewing": "Beoordelen",
+    "reviewingDescription": "Suggesties doen",
+    "viewOnly": "Alleen bekijken",
+    "viewOnlyDescription": "Bekijk zonder suggesties",
     "notSupportedOnMobile": "Office-bewerking wordt niet ondersteund op mobiele apparaten."
   },
   "insertPageModal": {
@@ -1259,8 +1291,34 @@
   },
   "stylePanel": {
     "headings": {
-      "styles": "Stijlen"
+      "styles": "Stijlen",
+      "annotation": "Annotatie",
+      "annotations": "Annotaties",
+      "tool": "Hulpmiddel",
+      "textStyles": "Tekststijlen",
+      "currentColor": "Huidige kleur",
+      "customColors": "Aangepaste kleuren",
+      "redactionTextLabel": "Tekstlabel",
+      "redactionMarkOutline": "Markeer overzicht",
+      "redactionFill": "Redactiekleur",
+      "redactionTextPlaceholder": "Tekstlabel invoegen",
+      "contentEdit": "Inhoud bewerken"
     },
-    "noToolSelected": "Selecteer een gereedschap om de gereedschapseigenschappen te bekijken"
+    "addColorToCustom": "Voeg toe aan aangepaste kleuren",
+    "noToolSelected": "Selecteer een gereedschap om de gereedschapseigenschappen te bekijken",
+    "noToolStyle": "Tool bevat geen stijleigenschappen."
+  },
+  "signatureListPanel": {
+    "header": "Handtekeningenlijst",
+    "newSignature": "Nieuwe handtekening",
+    "newSignatureAndInitial": "Nieuwe handtekening en initiaal",
+    "signatureList": {
+      "signature": "Handtekening",
+      "initials": "Initialen"
+    }
+  },
+  "rubberStampPanel": {
+    "header": "Stempels",
+    "standard": "Standaard postzegels"
   }
 }

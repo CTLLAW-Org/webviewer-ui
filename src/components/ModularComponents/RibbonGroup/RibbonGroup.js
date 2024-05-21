@@ -8,10 +8,12 @@ import actions from 'actions';
 import FlexDropdown from '../FlexDropdown';
 import { ITEM_TYPE, DIRECTION } from 'constants/customizationVariables';
 import ToggleElementButton from '../ToggleElementButton';
-
-import './RibbonGroup.scss';
+import getToolbarTranslationString from 'helpers/translationKeyMapping';
 import sizeManager, { storeSizeHook } from 'helpers/responsivnessHelper';
 import { itemToFlyout } from 'helpers/itemToFlyoutHelper';
+import Icon from 'components/Icon';
+
+import './RibbonGroup.scss';
 
 const DEFAULT_DROPDOWN_HEIGHT = 72;
 
@@ -38,12 +40,24 @@ const RibbonGroup = (props) => {
     justifyContent,
     grow = 0,
   } = props;
+
   const [itemsGap, setItemsGap] = useState(gap);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [ribbonItems] = useState(validateItems(items));
-  const [currentToolbarGroup] = useSelector((state) => [
-    selectors.getCurrentToolbarGroup(state),
-  ]);
+  const [ribbonItems, setRibbonItems] = useState(validateItems(items));
+  const [
+    activeCustomRibbon,
+    customHeadersAdditionalProperties,
+    isRibbonGroupDisabled,
+    groupedItemsOfActiveCustomRibbon,
+  ] = useSelector((state) => {
+    const activeCustomRibbon = selectors.getActiveCustomRibbon(state);
+    return [
+      activeCustomRibbon,
+      selectors.getCustomHeadersAdditionalProperties(state),
+      selectors.isElementDisabled(state, dataElement),
+      selectors.getGroupedItemsOfCustomRibbon(state, activeCustomRibbon),
+    ];
+  });
 
   const elementRef = useRef();
 
@@ -75,6 +89,19 @@ const RibbonGroup = (props) => {
   }, [size]);
   storeSizeHook(dataElement, size, elementRef, headerDirection);
 
+  const setActiveCustomRibbon = useCallback(
+    (ribbon) => {
+      dispatch(actions.setActiveCustomRibbon(ribbon));
+    },
+    [dispatch],
+  );
+
+  useEffect(() => {
+    if (!activeCustomRibbon) {
+      setActiveCustomRibbon(ribbonItems[0]?.toolbarGroup);
+    }
+  }, []);
+
   useEffect(() => {
     const flyout = {
       dataElement: FLYOUT_NAME,
@@ -82,12 +109,12 @@ const RibbonGroup = (props) => {
       items: [],
     };
     if (size > 0) {
-      const activeIndex = ribbonItems.findIndex((item) => item.toolbarGroup === currentToolbarGroup);
+      const activeIndex = ribbonItems.findIndex((item) => item.toolbarGroup === activeCustomRibbon);
       const lastIndex = ribbonItems.length - 1;
       const indexToExcludeFrom = activeIndex >= lastIndex - size ? lastIndex - size : lastIndex - size + 1;
       for (let i = 0; i < ribbonItems.length; i++) {
         const item = ribbonItems[i];
-        if (i < indexToExcludeFrom || item.toolbarGroup === currentToolbarGroup) {
+        if (i < indexToExcludeFrom || item.toolbarGroup === activeCustomRibbon) {
           continue;
         }
         const flyoutItem = itemToFlyout(item, {
@@ -100,27 +127,29 @@ const RibbonGroup = (props) => {
         }
       }
     }
+
     dispatch(actions.updateFlyout(FLYOUT_NAME, flyout));
     setContainerWidth(elementRef.current?.clientWidth ?? 0);
-  }, [size, currentToolbarGroup]);
+  }, [size, activeCustomRibbon, ribbonItems.length]);
 
   useEffect(() => {
     setItemsGap(gap);
   }, [gap]);
 
-  const setToolbarGroup = useCallback(
-    (group, pickTool) => {
-      dispatch(actions.setToolbarGroup(group, pickTool));
-    },
-    [dispatch],
-  );
+  useEffect(() => {
+    setRibbonItems(validateItems(items));
+  }, [items]);
+
+  useEffect(() => {
+    dispatch(actions.setActiveGroupedItems(groupedItemsOfActiveCustomRibbon));
+  }, [activeCustomRibbon]);
 
   const renderRibbonItems = () => {
-    const activeIndex = ribbonItems.findIndex((item) => item.toolbarGroup === currentToolbarGroup);
+    const activeIndex = ribbonItems.findIndex((item) => item.toolbarGroup === activeCustomRibbon);
     const lastIndex = ribbonItems.length - 1;
     const indexToExcludeFrom = activeIndex >= lastIndex - size ? lastIndex - size : lastIndex - size + 1;
     return ribbonItems.map((item, index) => {
-      if (index >= indexToExcludeFrom && item.toolbarGroup !== currentToolbarGroup) {
+      if (index >= indexToExcludeFrom && item.toolbarGroup !== activeCustomRibbon) {
         return null;
       }
       const itemProps = item.props || item;
@@ -143,7 +172,22 @@ const RibbonGroup = (props) => {
     }
   };
 
-  if (ribbonItems && ribbonItems.length) {
+  const renderDropdownItem = (item, getTranslatedDisplayValue) => {
+    const glyph = item.img;
+    const text = getTranslatedDisplayValue(item.label);
+    return (
+      <div className='Dropdown__item-object'>
+        {glyph &&
+          <Icon glyph={glyph} className={item.className || ''} />
+        }
+        {(text) &&
+          <span className={'Dropdown__item-text'}>{text}</span>
+        }
+      </div>
+    );
+  };
+
+  if (!isRibbonGroupDisabled && ribbonItems && ribbonItems.length) {
     return (
       <div ref={elementRef} className={'RibbonGroupContainer'} data-element={dataElement}
         style={{ display: 'flex', flexDirection: headerDirection, justifyContent: justifyContent, flexGrow: grow }}>
@@ -184,13 +228,20 @@ const RibbonGroup = (props) => {
             height={headerDirection === DIRECTION.COLUMN ? DEFAULT_DROPDOWN_HEIGHT : undefined}
             direction={headerDirection}
             placement={headerPlacement}
-            objects={validateItems(items)}
-            objectKey={'toolbarGroup'}
-            currentSelectionKey={currentToolbarGroup}
-            onClickItem={(toolbarGroup) => {
-              setToolbarGroup(toolbarGroup);
+            items={validateItems(items)}
+            currentSelectionKey={activeCustomRibbon}
+            onClickItem={(customRibbon) => {
+              setActiveCustomRibbon(customRibbon);
             }}
+            getDisplayValue={(item) => {
+              const index = items.findIndex((el) => el.label === item);
+              return items[index]?.toolbarGroup;
+            }}
+            getKey = {(item) => item['toolbarGroup']}
+            getTranslationLabel={(key) => getToolbarTranslationString(key, customHeadersAdditionalProperties)}
             arrowDirection={getArrowDirection()}
+            renderItem={renderDropdownItem}
+            renderSelectedItem={renderDropdownItem}
           />
         </div>
       </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import RibbonGroup from './RibbonGroup';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { mockModularComponents } from '../AppStories/mockAppState';
 
 export default {
   title: 'ModularComponents/RibbonGroup',
@@ -14,18 +15,25 @@ const initialState = {
     customElementOverrides: {},
     openElements: {},
     customPanels: [],
-    customFlxPanels: [],
+    genericPanels: [],
     flyoutMap: {},
     headers: {},
     lastPickedToolForGroup: {},
     lastPickedToolGroup: {},
     toolButtonObjects: {},
-    toolbarGroup: 'toolbarGroup-View',
-    modularHeaders: [],
+    activeCustomRibbon: 'Ribbon Item1',
+    activeGroupedItems: [],
+    modularHeaders: {},
     modularHeadersHeight: {
       topHeaders: 40,
       bottomHeaders: 40
     },
+    lastPickedToolForGroupedItems: {},
+    customHeadersAdditionalProperties: {},
+    modularComponents: mockModularComponents,
+  },
+  featureFlags: {
+    customizableUI: true,
   },
 };
 
@@ -93,10 +101,18 @@ const store = configureStore({
 });
 
 export const ribbonGroupFull = () => {
+  // Removing toolbarGroup for match the testing output
+  // And avoiding re-creating test objects without toolbarGroup
+  const temp1 = Object.assign({}, item1, { toolbarGroup: null });
+  const temp2 = Object.assign({}, item2, { toolbarGroup: null });
+  const temp3 = Object.assign({}, item3, { toolbarGroup: null });
+  const temp4 = Object.assign({}, item4, { toolbarGroup: null });
+  const temp5 = Object.assign({}, item5, { toolbarGroup: null });
+
   const props = {
     dataElement: 'ribbon-group',
     headerDirection: 'row',
-    items: [item1, item2, item3, item4, item5, item6, item7, item8],
+    items: [temp1, temp2, temp3, temp4, temp5, item6, item7, item8],
   };
 
   return (
@@ -114,7 +130,10 @@ const initialStateDropdown = {
     ...initialState.viewer,
     customElementSizes: {
       'ribbon-group': 3
-    }
+    },
+    activeGroupedItems: [],
+    activeCustomRibbon: 'toolbarGroup-View',
+    modularComponents: mockModularComponents,
   }
 };
 
@@ -133,7 +152,7 @@ export const ribbonGroupDropdown = () => {
   return (
     <Provider store={storeDropdown}>
       <div style={{ display: 'flex', maxWidth: '10%' }}>
-        <RibbonGroup {...props}/>
+        <RibbonGroup {...props} />
       </div>
     </Provider>
   );

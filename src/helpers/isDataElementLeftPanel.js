@@ -1,16 +1,24 @@
 import DataElements from 'constants/dataElement';
+import { PLACEMENT } from 'constants/customizationVariables';
 
 export default (dataElement, state) => getLeftPanelDataElements(state).includes(dataElement);
 
 export const getLeftPanelDataElements = (state) => {
+  const featureFlags = state.featureFlags;
+  const { customizableUI } = featureFlags;
+
+  if (customizableUI) {
+    return state.viewer.genericPanels.filter((item) => item.location === PLACEMENT.LEFT);
+  }
+
   const defaultLeftPanels = [
     DataElements.PORTFOLIO_PANEL,
-    'thumbnailsPanel',
+    DataElements.THUMBNAILS_PANEL,
     DataElements.OUTLINE_PANEL,
-    'layersPanel',
+    DataElements.LAYERS_PANEL,
     DataElements.BOOKMARK_PANEL,
-    'signaturePanel',
-    'attachmentPanel',
+    DataElements.SIGNATURE_PANEL,
+    DataElements.ATTACHMENT_PANEL,
   ];
 
   if (state.viewer.notesInLeftPanel) {

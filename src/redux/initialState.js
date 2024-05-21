@@ -27,6 +27,9 @@ import { ShortcutKeys } from 'helpers/hotkeysManager';
 import defaultToolsWithInlineComment from 'src/constants/defaultToolsWithInlineCommentOnAnnotationSelected';
 import { SYNC_MODES } from 'constants/multiViewerContants';
 import { getInstanceID } from 'helpers/getRootNode';
+import { initialColors, initialTextColors } from 'helpers/initialColorStates';
+import { defaultModularComponents, defaultModularHeaders, defaultFlyoutMap } from './modularComponents';
+import { PANEL_SIZES } from 'constants/panel';
 
 const { ToolNames } = window.Core.Tools;
 const instanceId = getInstanceID();
@@ -87,6 +90,7 @@ export default {
       [DataElements.STYLE_POPUP_LABEL_TEXT_CONTAINER]: true,
       [DataElements.FORM_FIELD_INDICATOR_CONTAINER]: true,
       [DataElements.CUSTOM_MODAL]: true,
+      [DataElements.RICH_TEXT_STYLE_CONTAINER]: true,
     },
     hiddenElements: {},
     panelWidths: {
@@ -98,12 +102,21 @@ export default {
       wv3dPropertiesPanel: 307,
       comparePanel: 330,
       watermarkPanel: 330,
-      stylePanel: 301,
+      stylePanel: 330,
+      signatureListPanel: 330,
+      rubberStampPanel: 330,
+      customLeftPanel: 330
     },
+    mobilePanelSize: PANEL_SIZES.SMALL_SIZE,
     documentContainerWidth: null,
     documentContainerHeight: null,
     lastPickedToolForGroup: {},
     lastPickedToolGroup: {},
+    lastPickedToolForGroupedItems: {},
+    lastPickedToolAndGroup: {
+      tool: 'AnnotationEdit',
+      group: [],
+    },
     highContrastMode: getHashParameters('highContrastMode', false),
     notesInLeftPanel: getHashParameters('notesInLeftPanel', false),
     autoFocusNoteOnAnnotationSelection: getHashParameters('autoFocusNoteOnAnnotationSelection', true),
@@ -114,6 +127,7 @@ export default {
     isAnnotationNumberingEnabled: getHashParameters('enableAnnotationNumbering', false),
     bookmarkIconShortcutVisibility: false,
     hideContentEditWarning: isContentEditWarningHidden(),
+    contentEditWorkersLoaded: false,
     currentContentBeingEdited: null,
     pageManipulationOverlayAlternativePosition: null,
     pageManipulationOverlayOpenByRightClick: true,
@@ -157,14 +171,24 @@ export default {
         },
         { type: 'divider', hidden: ['small-mobile', 'mobile', 'tablet'] },
         { type: 'toolButton', toolName: 'Pan' },
-        // For mobile
-        { type: 'toolButton', toolName: 'TextSelect' },
+        { type: 'toolButton', toolName: 'TextSelect' }, // For mobile
         { type: 'toolButton', toolName: 'AnnotationEdit', hidden: ['small-mobile', 'mobile'] },
         {
           type: 'customElement',
           render: () => <Ribbons />,
           className: 'custom-ribbons-container',
         },
+        // {
+        //   type: 'customElement',
+        //   render: () => <TrackChangeOverlay />,
+        //   dataElement: DataElements.TRACK_CHANGE_OVERLAY_BUTTON,
+        //   isOfficeEditorOnly: true,
+        // },
+        // {
+        //   type: 'divider',
+        //   hidden: ['small-mobile'],
+        //   isOfficeEditorOnly: true,
+        // },
         {
           type: 'toggleElementButton',
           dataElement: 'searchButton',
@@ -179,10 +203,6 @@ export default {
           img: 'icon-header-chat-line',
           title: 'component.notesPanel',
           element: 'notesPanel',
-          onClick: (dispatch) => {
-            // Trigger with a delay so we ensure the panel is open before we compute correct coordinates of annotation
-            setTimeout(() => dispatch(actions.toggleElement('annotationNoteConnectorLine')), 400);
-          },
           hidden: ['small-mobile'],
         },
         {
@@ -1723,6 +1743,7 @@ export default {
         showColor: 'never',
       },
       TextSelect: { dataElement: 'textSelectButton', img: 'icon-header-select-line', showColor: 'never' },
+      OfficeEditorContentSelect: { dataElement: 'textSelectButton', img: 'icon-header-select-line', showColor: 'never' },
       MarqueeZoomTool: { dataElement: 'marqueeToolButton', showColor: 'never' },
       AnnotationEraserTool: {
         dataElement: 'eraserToolButton',
@@ -1909,6 +1930,7 @@ export default {
         ? JSON.parse(window.localStorage.getItem(`${instanceId}-customColors`))
         : [],
     activeLeftPanel: 'thumbnailsPanel',
+    activeCustomPanel: '',
     activeToolGroup: '',
     notePopupId: '',
     isNoteEditing: false,
@@ -1938,7 +1960,7 @@ export default {
     isReadOnly: getHashParameters('readonly', false),
     customModals: [],
     customPanels: [],
-    customFlxPanels: [],
+    genericPanels: [],
     useEmbeddedPrint: false,
     pageLabels: [],
     selectedThumbnailPageIndexes: [],
@@ -1960,7 +1982,7 @@ export default {
     },
     measurementScalePreset: getMeasurementScalePreset(),
     isMultipleScalesMode: true,
-    maxSignaturesCount: 4,
+    maxSignaturesCount: 10,
     signatureFonts: ['Satisfy', 'Nothing-You-Could-Do', 'La-Belle-Aurore', 'Whisper'],
     isReplyDisabledFunc: null,
     userData: [],
@@ -1969,6 +1991,7 @@ export default {
     standardStamps: [],
     customStamps: [],
     selectedStampIndex: 0,
+    lastSelectedStampIndex: 0,
     signatureMode: SignatureModes.FULL_SIGNATURE,
     savedSignatures: [],
     savedInitials: [],
@@ -1983,6 +2006,7 @@ export default {
     fonts: [...defaultFonts, ...webFonts],
     shouldResetAudioPlaybackPosition: false,
     activeSoundAnnotation: null,
+    embeddedJSPopupStyle: {},
     shouldShowApplyCropWarning: true,
     shouldShowApplySnippingWarning: true,
     presetCropDimensions,
@@ -2038,11 +2062,13 @@ export default {
     savedSignatureTabEnabled: false,
     replyAttachmentHandler: null,
     customSettings: [],
-    modularHeaders: [],
+    modularHeaders: defaultModularHeaders,
+    modularComponents: defaultModularComponents,
     activeGroupedItems: [],
+    activeCustomRibbon: '',
     fixedGroupedItems: [],
     modularHeadersHeight: {
-      topHeaders: 32,
+      topHeaders: 49,
       bottomHeaders: 32
     },
     modularHeadersWidth: {
@@ -2055,37 +2081,21 @@ export default {
       bottomFloatingContainerHeight: 0,
     },
     toolDefaultStyleUpdateFromAnnotationPopupEnabled: true,
+    annotationToolStyleSyncingEnabled: false,
     shortcutKeyMap: { ...ShortcutKeys },
-    flyoutMap: {},
+    flyoutMap: defaultFlyoutMap,
     flyoutPosition: { x: 0, y: 0 },
     activeFlyout: null,
     flyoutToggleElement: null,
     textSignatureCanvasMultiplier: 1,
     isShowComparisonButtonEnabled: false,
     isMultiViewerModeAvailable: false,
-    colors: [
-      '#fdac0f',
-      '#fa9933',
-      '#f34747',
-      '#21905b',
-      '#c531a4',
-      '#e5631a',
-      '#3e5ece',
-      '#dc9814',
-      '#c27727',
-      '#b11c1c',
-      '#13558c',
-      '#76287b',
-      '#347842',
-      '#318f29',
-      '#ffffff',
-      '#cdcdcd',
-      '#9c9c9c',
-      '#696969',
-      '#272727',
-      '#000000'
-    ],
+    isOfficeEditorMode: false,
+    colors: initialColors,
+    textColors: initialTextColors,
+    toolColorOverrides: {},
     defaultPrintMargins: '0',
+    scaleOverlayPosition: 'top-right',
   },
   search: {
     value: '',

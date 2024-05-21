@@ -1,8 +1,8 @@
 /**
- * @ignore
- * Return a Custom Header
+ * Returns a modular header component with the given dataElement.
  * @method UI.getModularHeader
- * @return {ModularHeader} Custom Header
+ * @param {string} dataElement The dataElement of the header to be returned
+ * @return {UI.Components.ModularHeader} Custom Header
  * @example
 WebViewer(...)
   .then(function(instance) {
@@ -11,5 +11,17 @@ WebViewer(...)
  */
 
 import selectors from 'selectors';
+import ModularHeader from './ModularComponents/modularHeader';
+import createModularInstance from './ModularComponents/createModularInstance';
 
-export default (store) => (dataElement) => selectors.getModularHeader(store.getState(), dataElement);
+export default (store) => (dataElement) => {
+  const hydratedHeader = selectors.getHydratedHeader(store.getState(), dataElement);
+
+  if (!hydratedHeader) {
+    console.warn(`There is no header with dataElement ${dataElement}`);
+    return null;
+  }
+
+  const nestedItems = hydratedHeader.items.map((item) => createModularInstance(item, store));
+  return new ModularHeader(store)({ ...hydratedHeader, items: nestedItems });
+};

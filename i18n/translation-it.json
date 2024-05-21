@@ -72,6 +72,7 @@
     "type": "genere",
     "upload": "Caricare",
     "link": "collegamento",
+    "unlink": "Elimina collegamento",
     "fileAttachmentDownload": "Scarica il file allegato",
     "prevResult": "Risultato precedente",
     "nextResult": "Il prossimo risultato",
@@ -82,6 +83,8 @@
     "exit": "Uscita",
     "addOption": "Aggiungi opzione",
     "formFieldEdit": "Modifica campo modulo",
+    "formFieldEditMode": "Modifica campi modulo",
+    "contentEditMode": "Modifica contenuto",
     "viewShortCutKeysFor3D": "Visualizza i tasti di scelta rapida",
     "markAllRead": "segna tutto come letto",
     "pageInsertion": "Inserimento pagina",
@@ -122,7 +125,10 @@
     "clearSignature": "Firma chiara",
     "newDocument": "Nuovo documento",
     "sideBySideView": "Vista affiancata",
-    "pageNumberInput": "Inserimento del numero di pagina"
+    "pageNumberInput": "Inserimento del numero di pagina",
+    "addNewColor": "Aggiungi nuovo colore",
+    "deleteColor": "Elimina il colore selezionato",
+    "copySelectedColor": "Copia il colore selezionato"
   },
   "annotation": {
     "areaMeasurement": "Misurazione dell'area",
@@ -284,9 +290,6 @@
     "linkURLorPage": "Link URL o una pagina",
     "warning": "Avvertimento",
     "svgMalicious": "Script SVG ignorato per motivi di sicurezza",
-    "enterContentEditingMode": "Stai per accedere alla modalità di modifica del testo.",
-    "existingAnnotationWarning": "Le annotazioni esistenti potrebbero non corrispondere al testo dopo che è stato modificato.",
-    "changesCannotBeUndone": "Eventuali modifiche apportate non possono essere annullate.",
     "doNotShowAgain": "Non mostrarmelo di nuovo",
     "doNotAskAgain": "Non chiedere nuovamente",
     "enterReplacementText": "Inserisci il testo che vuoi sostituire",
@@ -295,6 +298,8 @@
     "unpostedComment": "Commento non pubblicato",
     "lockedLayer": "Il livello è bloccato",
     "layerVisibililtyNoChange": "La visibilità del livello non può essere modificata",
+    "noLayers": "Questo documento non ha livelli.",
+    "noSignatureFields": "Questo documento non ha campi per la firma.",
     "untitled": "Senza titolo",
     "selectHowToLoadFile": "Seleziona come caricare il tuo documento",
     "openFileByUrl": "Apri file tramite URL:",
@@ -366,6 +371,10 @@
     },
     "colorPalette": {
       "colorLabel": "Colore"
+    },
+    "colorPalettePicker": {
+      "addColor": "Aggiungi nuovo colore",
+      "selectColor": "Seleziona il colore"
     },
     "displayMode": {
       "layout": "disposizione",
@@ -509,6 +518,9 @@
       "radius": "Raggio",
       "count": "Contare",
       "length": "Lunghezza"
+    },
+    "freeTextOption": {
+      "autoSizeFont": "Ridimensiona la dimensione del carattere in modo dinamico"
     },
     "measurementOption": {
       "scale": "Scala"
@@ -702,6 +714,7 @@
       "redoChange": "Ripristina una modifica all'annotazione",
       "openFile": "Apri il selettore di file",
       "openSearch": "Apri l'overlay di ricerca",
+      "zoomOptions": "Opzioni di zoom",
       "zoomIn": "Ingrandire",
       "zoomOut": "Riduci lo zoom",
       "fitScreenWidth": "Adatta il documento alla larghezza dello schermo in uno schermo piccolo (<640px), altrimenti adattalo alla sua dimensione originale",
@@ -768,6 +781,9 @@
       "deleteTitle": "Elimina colore personalizzato",
       "deleteMessage": "Eliminare il colore personalizzato selezionato? Verrà rimosso dalla tavolozza dei colori."
     },
+    "colorPalettePicker": {
+      "deleteTitle": "Elimina il colore personalizzato"
+    },
     "multiDeleteAnnotation": {
       "title": "Eliminare le annotazioni?",
       "message": "L'eliminazione rimuoverà tutti i commenti, le risposte e i raggruppamenti e non potrà essere annullata.\n\n Sei sicuro di voler eliminare queste annotazioni?"
@@ -800,7 +816,7 @@
     "select": "(Esc)",
     "signature": "(S)",
     "squiggly": "(G)",
-    "image": "(IO)",
+    "image": "(I)",
     "redo": "(Ctrl Maiusc Z)",
     "redo_windows": "(Ctrl Y)",
     "undo": "(Ctrl Z)",
@@ -1165,6 +1181,22 @@
     "increaseIndent": "Aumenta rientro",
     "insertLink": "Inserisci collegamento",
     "insertImage": "Inserisci immagine",
+    "table": "Tavolo",
+    "insertRowAbove": "Inserisci riga sopra",
+    "insertRowBelow": "Inserisci riga sotto",
+    "insertColumnRight": "Inserisci colonna a destra",
+    "insertColumnLeft": "Inserisci colonna a sinistra",
+    "deleteRow": "Elimina riga",
+    "deleteColumn": "Elimina colonna",
+    "deleteTable": "Elimina tabella",
+    "deleted": "Eliminato:",
+    "added": "Aggiunto:",
+    "editing": "La modifica",
+    "editingDescription": "Modifica documento",
+    "reviewing": "Revisione",
+    "reviewingDescription": "Dare suggerimenti",
+    "viewOnly": "Visualizzare solamente",
+    "viewOnlyDescription": "Visualizza senza suggerimenti",
     "notSupportedOnMobile": "La modifica di Office non è supportata sui dispositivi mobili."
   },
   "insertPageModal": {
@@ -1259,8 +1291,34 @@
   },
   "stylePanel": {
     "headings": {
-      "styles": "Stili"
+      "styles": "Stili",
+      "annotation": "Annotazione",
+      "annotations": "Annotazioni",
+      "tool": "Attrezzo",
+      "textStyles": "Stili di testo",
+      "currentColor": "Colore corrente",
+      "customColors": "Colori personalizzati",
+      "redactionTextLabel": "Etichetta di testo",
+      "redactionMarkOutline": "Segna contorno",
+      "redactionFill": "Colore di redazione",
+      "redactionTextPlaceholder": "Inserisci etichetta di testo",
+      "contentEdit": "Modifica contenuto"
     },
-    "noToolSelected": "Seleziona uno strumento per visualizzarne le proprietà"
+    "addColorToCustom": "Aggiungi a colori personalizzati",
+    "noToolSelected": "Seleziona uno strumento per visualizzarne le proprietà",
+    "noToolStyle": "Lo strumento non contiene alcuna proprietà di stile."
+  },
+  "signatureListPanel": {
+    "header": "Elenco delle firme",
+    "newSignature": "Nuova firma",
+    "newSignatureAndInitial": "Nuova firma e iniziale",
+    "signatureList": {
+      "signature": "Firma",
+      "initials": "Iniziali"
+    }
+  },
+  "rubberStampPanel": {
+    "header": "Francobolli",
+    "standard": "Francobolli standard"
   }
 }

@@ -14,12 +14,15 @@ const initialState = {
     customElementOverrides: {},
     openElements: {},
     customPanels: [],
-    customFlxPanels: [],
+    genericPanels: [],
     headers: {},
     lastPickedToolForGroup: {},
     lastPickedToolGroup: {},
     toolButtonObjects: {},
-    toolbarGroup: 'toolbarGroup-View',
+    activeCustomRibbon: 'Ribbon Item1',
+    activeGroupedItems: [],
+    lastPickedToolForGroupedItems: {},
+    customHeadersAdditionalProperties: {},
   },
 };
 
@@ -30,7 +33,7 @@ const initialStateActive = (toolbarGroup) => {
   return ({
     viewer: {
       ...initialState.viewer,
-      toolbarGroup: toolbarGroup
+      activeCustomRibbon: toolbarGroup
     }
   });
 };
@@ -41,7 +44,7 @@ const store = configureStore({
     switch (type) {
       case 'SET_TOOLBAR_GROUP':
         return initialStateActive(payload.toolbarGroup);
-      case 'SET_CURRENT_GROUPED_ITEMS':
+      case 'SET_ACTIVE_GROUPED_ITEMS':
         return initialStateActive(currentToolbarGroup);
       default:
         return initialState;
@@ -54,18 +57,39 @@ export const RibbonItems = () => {
     dataElement: 'Ribbon Item1',
     img: 'icon-header-pan',
     title: 'icon only',
-    toolbarGroup: 'toolbarGroup-View'
+    activeCustomRibbon: 'toolbarGroup-View',
   };
   const item2Props = {
     dataElement: 'Ribbon Item2',
     label: 'label only',
-    toolbarGroup: 'toolbarGroup-Annotate'
+    activeCustomRibbon: 'toolbarGroup-Annotate',
   };
   const item3Props = {
     dataElement: 'Ribbon Item3',
     label: 'icon and label',
     img: 'icon-header-pan',
-    toolbarGroup: 'toolbarGroup-Shapes'
+    activeCustomRibbon: 'toolbarGroup-Shapes',
+  };
+  const item4Props = {
+    dataElement: 'Ribbon Item1',
+    img: 'icon-header-pan',
+    title: 'icon only',
+    activeCustomRibbon: 'toolbarGroup-Insert',
+    direction: 'column',
+  };
+  const item5Props = {
+    dataElement: 'Ribbon Item2',
+    label: 'label only',
+    activeCustomRibbon: 'toolbarGroup-Measure',
+    direction: 'column',
+    justifyContent: 'end',
+  };
+  const item6Props = {
+    dataElement: 'Ribbon Item3',
+    label: 'icon and label',
+    img: 'icon-header-pan',
+    activeCustomRibbon: 'toolbarGroup-Edit',
+    direction: 'column',
   };
   const item4Props = {
     dataElement: 'Ribbon Item1',

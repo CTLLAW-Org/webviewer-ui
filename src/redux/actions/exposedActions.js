@@ -1,16 +1,25 @@
 import core from 'core';
 import isDataElementLeftPanel from 'helpers/isDataElementLeftPanel';
 import fireEvent from 'helpers/fireEvent';
-import { getAllPanels } from 'helpers/getElements';
-import { indexOfHeaderItem } from 'helpers/headers';
 import { getMaxZoomLevel, getMinZoomLevel } from 'constants/zoomFactors';
 import { disableElements, enableElements, setActiveFlyout } from 'actions/internalActions';
 import defaultTool from 'constants/defaultTool';
 import { PRIORITY_TWO } from 'constants/actionPriority';
 import Events from 'constants/events';
-import { getCustomFlxPanels } from 'selectors/exposedSelectors';
+import { getGenericPanels, getOpenGenericPanel } from 'selectors/exposedSelectors';
 import DataElements from 'constants/dataElement';
+import { ITEM_TYPE } from 'constants/customizationVariables';
+import pick from 'lodash/pick';
+import { v4 as uuidv4 } from 'uuid';
+import selectors from 'selectors';
+import checkFeaturesToEnable from 'helpers/checkFeaturesToEnable';
+import { getModularItem, getNestedGroupedItems } from 'helpers/modularUIHelpers';
+import { isMobile } from 'helpers/device';
 
+export const setScaleOverlayPosition = (position) => ({
+  type: 'SET_SCALE_OVERLAY_POSITION',
+  payload: { position },
+});
 export const setDefaultPrintMargins = (margins) => ({
   type: 'SET_DEFAULT_PRINT_MARGINS',
   payload: { margins },
@@ -121,10 +130,12 @@ export const setCustomStamps = (t) => async (dispatch) => {
     }),
   );
 
-  const customStamps = annotations.map((annotation) => ({
+  const customStampsPromises = annotations.map(async (annotation) => ({
     annotation,
-    imgSrc: annotation['ImageData'],
+    imgSrc: await annotation.getImageData(),
   }));
+
+  const customStamps = await Promise.all(customStampsPromises);
 
   dispatch({
     type: 'SET_CUSTOM_STAMPS',
@@ -148,9 +159,14 @@ export const enableRibbons = () => (dispatch, getState) => {
   // the active toolbarGroup as what is in the current state and Forms, as redux hasnt dispatched the update to the Forms tool bar yet.
   // We double check here if we are in form mode and set the correct tool bar group
   // We enable ribbons when going into form mode, as we temporarily elevate the user's permissions
+  const featureFlags = selectors.getFeatureFlags(getState());
+  const { customizableUI } = featureFlags;
+
   const isInFormFieldCreationMode = core.getFormFieldCreationManager().isInFormFieldCreationMode();
-  const toolbarGroup = isInFormFieldCreationMode ? 'toolbarGroup-Forms' : state.viewer.toolbarGroup;
-  dispatch(setToolbarGroup(toolbarGroup || 'toolbarGroup-Annotate'));
+  const toolbarGroup = isInFormFieldCreationMode ? DataElements.FORMS_TOOLBAR_GROUP : state.viewer.toolbarGroup;
+  if (!customizableUI) {
+    dispatch(setToolbarGroup(toolbarGroup || DataElements.ANNOTATE_TOOLBAR_GROUP));
+  }
   const toolbarGroupsToEnable = Object.keys(state.viewer.headers).filter((key) => key.includes('toolbarGroup-'));
 
   enableElements(toolbarGroupsToEnable, PRIORITY_TWO)(dispatch, getState);
@@ -166,12 +182,67 @@ export const allButtonsInGroupDisabled = (state, toolGroup) => {
   return dataElements.every((dataElement) => isElementDisabled(state, dataElement));
 };
 
-export const setCurrentGroupedItem = (groupedItems) => (dispatch) => {
-  dispatch({
-    type: 'SET_CURRENT_GROUPED_ITEMS',
-    payload: { groupedItems },
+export const getFirstToolForGroupedItems = (state, group) => {
+  const modularComponents = state.viewer.modularComponents;
+  const items = modularComponents[group]?.items;
+  let firstTool = '';
+
+  items?.find((item) => {
+    const { type, toolName, dataElement } = modularComponents[item];
+    if (type === ITEM_TYPE.TOOL_BUTTON && toolName && !isElementDisabled(state, dataElement)) {
+      firstTool = toolName;
+      return toolName;
+    }
+    return false;
   });
+  return firstTool;
 };
+
+export const setLastPickedToolAndGroup = (toolAndGroup) => ({
+  type: 'SET_LAST_PICKED_TOOL_AND_GROUP',
+  payload: { tool: toolAndGroup.tool, group: toolAndGroup.group }
+});
+
+export const setActiveGroupedItems = (groupedItems) => (dispatch, getState) => {
+  const state = getState();
+
+  const childGroupedItems = getNestedGroupedItems(state, groupedItems);
+
+  // Check and set the last picked tool for grouped items
+  const isLastPickedToolSet = groupedItems.some((groupedItem) => state.viewer.lastPickedToolForGroupedItems?.[groupedItem]);
+  if (!isLastPickedToolSet) {
+    groupedItems.some((groupedItem) => {
+      const firstTool = getFirstToolForGroupedItems(state, groupedItem);
+      if (firstTool) {
+        dispatch(setLastPickedToolForGroupedItems(firstTool, groupedItem));
+        dispatch(setLastPickedToolAndGroup({
+          tool: firstTool,
+          group: [groupedItem]
+        }));
+        return true;
+      }
+      return false;
+    });
+  }
+
+  childGroupedItems.forEach((childGroupedItem) => {
+    if (state.viewer.lastPickedToolForGroupedItems?.[childGroupedItem]) {
+      dispatch(setLastPickedToolForGroupedItems('', childGroupedItem));
+    }
+  });
+
+  dispatch(setGroupedItems([...groupedItems, ...childGroupedItems]));
+};
+
+const setLastPickedToolForGroupedItems = (toolName, groupedItem) => ({
+  type: 'SET_LAST_PICKED_TOOL_FOR_GROUPED_ITEMS',
+  payload: { toolName, groupedItem },
+});
+
+const setGroupedItems = (groupedItems) => ({
+  type: 'SET_ACTIVE_GROUPED_ITEMS',
+  payload: { groupedItems },
+});
 
 export const setFixedGroupedItems = (groupedItems) => (dispatch) => {
   dispatch({
@@ -179,6 +250,11 @@ export const setFixedGroupedItems = (groupedItems) => (dispatch) => {
     payload: { groupedItems }
   });
 };
+
+export const setActiveCustomRibbon = (customRibbon) => ({
+  type: 'SET_ACTIVE_CUSTOM_RIBBON',
+  payload: { customRibbon }
+});
 
 export const setToolbarGroup = (toolbarGroup, pickTool = true, toolGroup = '') => (dispatch, getState) => {
   const getFirstToolGroupForToolbarGroup = (state, _toolbarGroup) => {
@@ -220,6 +296,9 @@ export const setToolbarGroup = (toolbarGroup, pickTool = true, toolGroup = '') =
     const lastPickedToolName =
       state.viewer.lastPickedToolForGroup[lastPickedToolGroup] || getFirstToolNameForGroup(state, lastPickedToolGroup);
     if (pickTool) {
+      if (toolbarGroup === DataElements.EDIT_TOOLBAR_GROUP || toolbarGroup === DataElements.EDIT_TEXT_TOOLBAR_GROUP) {
+        dispatch(closeElement(DataElements.STYLE_PANEL));
+      }
       dispatch({
         type: 'SET_ACTIVE_TOOL_GROUP',
         payload: { toolGroup: lastPickedToolGroup, toolbarGroup },
@@ -239,14 +318,56 @@ export const setToolbarGroup = (toolbarGroup, pickTool = true, toolGroup = '') =
     }
   }
   dispatch(closeElements(['toolsOverlay', 'signatureOverlay', 'toolStylePopup']));
+
   dispatch({
     type: 'SET_TOOLBAR_GROUP',
     payload: { toolbarGroup },
   });
   fireEvent(Events.TOOLBAR_GROUP_CHANGED, toolbarGroup);
 };
+
+export const setActiveGroupedItemWithTool = (toolName) => (dispatch, getState) => {
+  const state = getState();
+  const groupedItemsWithTool = selectors.getGroupedItemsWithSelectedTool(state, toolName);
+  const activeGroupedItems = selectors.getActiveGroupedItems(state);
+  const activeGroupedItemsContainsTool = activeGroupedItems.some((item) => groupedItemsWithTool.includes(item));
+
+  // If no active grouped items have the selected tool, we set the first one as active
+  if (!activeGroupedItemsContainsTool && groupedItemsWithTool.length > 0) {
+    let firstGroupedItem = '';
+    let associatedRibbonItem = '';
+    for (let i = 0; i < groupedItemsWithTool.length; i++) {
+      firstGroupedItem = groupedItemsWithTool[i];
+      associatedRibbonItem = selectors.getRibbonItemAssociatedWithGroupedItem(state, firstGroupedItem);
+      if (associatedRibbonItem) {
+        break;
+      }
+    }
+    // We just set the active custom ribbon if there is an associated ribbon item.
+    if (associatedRibbonItem) {
+      dispatch(setActiveCustomRibbon(associatedRibbonItem));
+    }
+    dispatch(setLastPickedToolForGroupedItems(toolName, firstGroupedItem));
+    dispatch(setActiveGroupedItems([...activeGroupedItems, firstGroupedItem]));
+  } else if (activeGroupedItemsContainsTool) {
+    // If the active grouped items have the selected tool, we set the selected tool for the first one
+    const firstGroupedItem = activeGroupedItems[0];
+    const items = getModularItem(state, firstGroupedItem).items;
+    const itemInFirstGroupedItem = items.some((item) => getModularItem(state, item).toolName === toolName);
+    if (itemInFirstGroupedItem) {
+      dispatch(setLastPickedToolForGroupedItems(toolName, firstGroupedItem));
+    } else {
+      dispatch(setLastPickedToolForGroupedItems('', firstGroupedItem));
+    }
+  }
+};
+
 export const setSelectedStampIndex = (index) => ({
   type: 'SET_SELECTED_STAMP_INDEX',
+  payload: { index },
+});
+export const setLastSelectedStampIndex = (index) => ({
+  type: 'SET_LAST_SELECTED_STAMP_INDEX',
   payload: { index },
 });
 export const setOutlineControlVisibility = (outlineControlVisibility) => ({
@@ -350,8 +471,10 @@ export const setHeaderMaxWidth = (dataElement, maxWidth) => updateHeaderProperty
 
 export const setHeaderMaxHeight = (dataElement, maxHeight) => updateHeaderProperty(dataElement, 'maxHeight', maxHeight);
 
+export const setHeaderStyle = (dataElement, style) => updateHeaderProperty(dataElement, 'style', style);
+
 const updateHeaderProperty = (dataElement, property, value) => ({
-  type: 'UPDATE_MODULAR_HEADERS',
+  type: 'UPDATE_MODULAR_HEADER',
   payload: {
     dataElement,
     property,
@@ -359,37 +482,36 @@ const updateHeaderProperty = (dataElement, property, value) => ({
   }
 });
 
-export const setGroupedItemsProperty = (propertyName, propertyValue, groupedItemsDataElement, headerDataElement) => (dispatch, getState) => {
-  const state = getState();
-  const headers = state.viewer.modularHeaders;
-  const updatedHeaders = headers.map((header) => {
-    // Will change only if there is no specific header for setting the property
-    // or if the specific header is the current one of the loop
-    if (!headerDataElement || header['dataElement'] === headerDataElement) {
-      if (groupedItemsDataElement) {
-        const itemIndex = indexOfHeaderItem(header, groupedItemsDataElement);
-        if (itemIndex > -1) {
-          header.items[itemIndex][propertyName] = propertyValue;
-          const updatedItems = [...header.items];
-          header.items = updatedItems;
-        }
-      } else {
-        const updatedItems = header.items.map((item) => {
-          if (item.hasOwnProperty(propertyName)) {
-            item[propertyName] = propertyValue;
-          }
-          return { ...item };
-        });
+// We may want to expose an API to update the props of any modular component
+// That is why the action refers to modular components and not just grouped items
+export const setGroupedItemsProperty = (property, value, groupedItemsDataElement) => ({
+  type: 'SET_MODULAR_COMPONENTS_PROPERTY',
+  payload: {
+    property,
+    value,
+    groupedItemsDataElement,
+  }
+});
 
-        header.items = updatedItems;
-      }
-    }
-    return { ...header };
-  });
+export const setAllGroupedItemsProperty = (property, value) => ({
+  type: 'SET_ALL_GROUPED_ITEMS_PROPERTY',
+  payload: {
+    property,
+    value,
+  }
+});
 
+export const updateGroupedItems = (groupedItemsDataElement, newGroupedItems) => (dispatch, getState) => {
+  const componentsMap = {};
+  const existingComponentsMap = getState().viewer.modularComponents;
+  const normalizedItems = normalizeItems(newGroupedItems, componentsMap, existingComponentsMap);
   dispatch({
-    type: 'SET_MODULAR_HEADERS',
-    payload: updatedHeaders
+    type: 'UPDATE_GROUPED_ITEMS',
+    payload: {
+      groupedItemsDataElement,
+      normalizedItems,
+      componentsMap
+    }
   });
 };
 
@@ -415,11 +537,20 @@ export const openElement = (dataElement) => (dispatch, getState) => {
     return;
   }
 
-  const flexPanel = state.viewer.customFlxPanels.find((item) => dataElement === item.dataElement);
-  if (flexPanel?.location === 'left' || flexPanel?.location === 'right') {
-    const keys = flexPanel.location === 'left' ? ['leftPanel'] : [...rightPanelList];
-    getAllPanels(flexPanel.location).forEach((item) => keys.push(item.dataset.element));
+  const genericPanel = state.viewer.genericPanels.find((item) => dataElement === item.dataElement);
+  if (genericPanel?.location === 'left' || genericPanel?.location === 'right') {
+    const keys = genericPanel.location === 'left' ? ['leftPanel'] : [...rightPanelList];
+    const genericPanelsInSameLocation = state.viewer.genericPanels.filter((item) => item.location === genericPanel?.location && item.dataElement !== genericPanel?.dataElement);
+    genericPanelsInSameLocation.forEach((item) => keys.push(item.dataElement));
     dispatch(closeElements(keys));
+  }
+
+  // In the mobile UI, we can have only one panel open at a time
+  if (genericPanel && isMobile()) {
+    const openGenericPanel = getOpenGenericPanel(state);
+    if (openGenericPanel) {
+      dispatch(closeElement(openGenericPanel));
+    }
   }
 
   if (isDataElementLeftPanel(dataElement, state) && dataElement !== DataElements.NOTES_PANEL) {
@@ -437,12 +568,6 @@ export const openElement = (dataElement) => (dispatch, getState) => {
         element: state.viewer.activeLeftPanel,
         isVisible: true,
       });
-    }
-
-    if (dataElement === 'leftPanel') {
-      const panels = getCustomFlxPanels(state, 'left');
-      const keys = panels.map((item) => item.dataElement);
-      dispatch(closeElements(keys));
     }
   }
 };
@@ -509,6 +634,8 @@ export const closeElements = (dataElements) => (dispatch) => {
 const rightPanelList = ['searchPanel', DataElements.NOTES_PANEL, 'comparePanel', 'redactionPanel', 'wv3dPropertiesPanel', 'textEditingPanel', 'watermarkPanel'];
 export const toggleElement = (dataElement) => (dispatch, getState) => {
   const state = getState();
+  const rightGenericPanels = getGenericPanels(state, 'right');
+  const allPanelsOnTheRight = [...rightPanelList, ...rightGenericPanels.map((item) => item.dataElement)];
 
   if (state.viewer.disabledElements[dataElement]?.disabled) {
     return;
@@ -516,15 +643,11 @@ export const toggleElement = (dataElement) => (dispatch, getState) => {
 
   // hack for new ui
   if (!state.viewer.notesInLeftPanel) {
-    if (rightPanelList.includes(dataElement)) {
-      for (const panel of rightPanelList) {
+    if (allPanelsOnTheRight.includes(dataElement)) {
+      for (const panel of allPanelsOnTheRight) {
         if (panel !== dataElement) {
           dispatch(closeElement(panel));
         }
-      }
-      const openFlexPanelsRight = getCustomFlxPanels(state, 'right');
-      for (const panel of openFlexPanelsRight) {
-        dispatch(closeElement(panel.dataElement));
       }
     }
   }
@@ -540,14 +663,110 @@ export const addCustomModal = (modalOptions) => ({
   type: 'ADD_CUSTOM_MODAL',
   payload: modalOptions,
 });
-export const addModularHeaders = (headersList) => ({
-  type: 'ADD_MODULAR_HEADERS',
-  payload: headersList
-});
-export const updateModularHeaders = (modularHeaders) => ({
-  type: 'SET_MODULAR_HEADERS',
-  payload: modularHeaders
-});
+
+const headerKeysToStore = [
+  'dataElement', 'label', 'placement', 'justifyContent',
+  'grow', 'gap', 'position', 'float', 'maxWidth', 'maxHeight',
+  'opacityMode', 'opacity', 'stroke', 'dimension', 'position', 'style'
+];
+
+// These are all the keys from the items we will store
+// There are a few non serializable ones here like the onclick function
+// we can determine their fate later
+const itemKeysToStore = [
+  'dataElement', 'items', 'title', 'disabled', 'type',
+  'isActive', 'label', 'img', 'onClick', 'justifyContent',
+  'groupedItems', 'grow', 'gap', 'position', 'placement', 'alwaysVisible',
+  'style', 'headerDirection', 'icon', 'toolbarGroup', 'direction',
+  'states', 'mount', 'unmount', 'initialState', 'hidden', 'toggleElement',
+  'toolName', 'color', 'buttonType'];
+
+//* Recursively normalize the items in a header
+const normalizeItems = (items, componentsMap, existingComponentsMap) => {
+  const result = [];
+  for (let i = 0, len = items.length; i < len; i++) {
+    const item = items[i];
+    const normalizedItem = pick(item, itemKeysToStore);
+    const dataElementKey = normalizedItem.dataElement;
+
+    // if the dataElementKey already exists in the header items, we will just continue
+    if (result.indexOf(dataElementKey) > -1) {
+      continue;
+    }
+
+    normalizedItem.dataElement = dataElementKey;
+
+    // If there are nested items, recursively normalize them
+    if (item.items && item.items.length > 0) {
+      const nestedItemsDataElements = normalizeItems(item.items, componentsMap, existingComponentsMap);
+      normalizedItem.items = nestedItemsDataElements;
+    }
+
+    let newNormalizedItem = normalizedItem;
+    if (existingComponentsMap[dataElementKey]) {
+      console.warn(`Modular component with dataElement ${dataElementKey} already exists.`);
+      const comp = existingComponentsMap[dataElementKey];
+      newNormalizedItem = { ...comp, ...normalizedItem };
+    }
+    componentsMap[dataElementKey] = newNormalizedItem;
+
+    result.push(dataElementKey);
+  }
+  return result;
+};
+
+const prepareModularHeaders = (headersList, existingComponentsMap = {}) => {
+  const headersMap = {};
+  const componentsMap = {};
+
+  headersList.forEach((header) => {
+    if (headersMap[header.dataElement]) {
+      const newKey = `${header.dataElement}-${uuidv4()}`;
+      console.warn(`Modular header with dataElement ${header.dataElement} already exists. Appending unique ID to prevent collisions: ${newKey}`);
+      header.dataElement = newKey;
+    }
+
+    const itemDataElements = normalizeItems(header.items, componentsMap, existingComponentsMap);
+    headersMap[header.dataElement] = { ...pick(header, headerKeysToStore), items: itemDataElements };
+  });
+  return { headersMap, componentsMap };
+};
+
+export const addModularHeaders = (headersList) => (dispatch, getState) => {
+  const existingComponentsMap = getState().viewer.modularComponents;
+  const { headersMap, componentsMap } = prepareModularHeaders(headersList, existingComponentsMap);
+
+  checkFeaturesToEnable(componentsMap);
+
+  dispatch({
+    type: 'ADD_MODULAR_HEADERS_AND_COMPONENTS',
+    payload: { headersMap, componentsMap }
+  });
+};
+export const setModularHeaders = (headersList) => (dispatch) => {
+  const { headersMap, componentsMap } = prepareModularHeaders(headersList);
+  dispatch({
+    type: 'SET_MODULAR_HEADERS_AND_COMPONENTS',
+    payload: { headersMap, componentsMap }
+  });
+};
+
+
+export const setModularHeaderItems = (headerDataElement, items) => (dispatch, getState) => {
+  const existingComponentsMap = getState().viewer.modularComponents;
+  const newComponentsMap = {};
+  const itemsDataElements = normalizeItems(items, newComponentsMap, existingComponentsMap);
+
+  dispatch({
+    type: 'SET_MODULAR_HEADER_ITEMS',
+    payload: {
+      headerDataElement: headerDataElement,
+      normalizedItems: newComponentsMap,
+      itemsDataElements: itemsDataElements
+    }
+  });
+};
+
 export const setRightHeaderWidth = (width) => ({
   type: 'SET_RIGHT_HEADER_WIDTH',
   payload: width
@@ -629,6 +848,16 @@ export const addPanel = (newPanel) => ({
   payload: { newPanel },
 });
 
+export const setGenericPanels = (genericPanels) => ({
+  type: 'SET_GENERIC_PANELS',
+  payload: { genericPanels },
+});
+
+export const setMobilePanelSize = (panelSize) => ({
+  type: 'SET_MOBILE_PANEL_SIZE',
+  payload: { panelSize },
+});
+
 export const setPageLabels = (pageLabels) => (dispatch) => {
   if (pageLabels.length !== core.getTotalPages()) {
     console.warn('Number of page labels do not match with the total pages.');
@@ -659,6 +888,10 @@ export const showWarningMessage = (options) => (dispatch) => {
   dispatch({ type: 'SET_WARNING_MESSAGE', payload: options });
   dispatch(openElement('warningModal'));
 };
+export const enableDeleteTabWarning = () => ({
+  type: 'ENABLE_DELETE_TAB_WARNING',
+  payload: { showDeleteTabWarning: true },
+});
 export const disableDeleteTabWarning = () => ({
   type: 'DISABLE_DELETE_TAB_WARNING',
   payload: { showDeleteTabWarning: false },
@@ -804,7 +1037,10 @@ export const setWatermarkModalOptions = (watermarkModalOptions) => ({
   type: 'SET_WATERMARK_MODAL_OPTIONS',
   payload: { watermarkModalOptions },
 });
-
+export const setEmbeddedPopupMenuStyle = (customStyle) => ({
+  type: 'SET_EMBEDDED_JS_POPUP_MENU_STYLE',
+  payload: { embeddedJSPopupStyle: customStyle },
+});
 export const replaceRedactionSearchPattern = (searchPattern, regex) => ({
   type: 'REPLACE_REDACTION_SEARCH_PATTERN',
   payload: { searchPattern, regex },
@@ -890,6 +1126,11 @@ export const setToolDefaultStyleUpdateFromAnnotationPopupEnabled = (isToolDefaul
   payload: isToolDefaultStyleUpdateFromAnnotationPopupEnabled
 });
 
+export const setAnnotationToolStyleSyncingEnabled = (isAnnotationToolStyleSyncingEnabled) => ({
+  type: 'SET_ANNOTATION_TOOL_STYLE_SYNCING_ENABLED',
+  payload: isAnnotationToolStyleSyncingEnabled
+});
+
 export const setMultiViewerSyncScrollingMode = (multiViewerComparedSyncScrollingMode) => ({
   type: 'SET_MULTI_VIEWER_SYNC_SCROLLING_MODE',
   payload: multiViewerComparedSyncScrollingMode
@@ -905,7 +1146,17 @@ export const setEnableMeasurementAnnotationsFilter = (isEnabled) => ({
   payload: { isEnabled },
 });
 
-export const setColors = (colors) => ({
-  type: 'SET_COLORS',
-  payload: { colors },
-});
+export const setColors = (colors, tool, type, updateOnly = false) => (dispatch, getState) => {
+  type = type ? type.toLowerCase() : type;
+  const state = getState();
+  if (tool && (!updateOnly || (updateOnly && state.viewer.toolColorOverrides[tool]))) {
+    return dispatch({
+      type: 'SET_COLORS',
+      payload: { tool, colors },
+    });
+  }
+  dispatch({
+    type: 'SET_COLORS',
+    payload: type === 'text' ? { textColors: colors } : { colors },
+  });
+};

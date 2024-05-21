@@ -38,13 +38,13 @@ export const itemToFlyout = (item, {
   if (itemProps.type === ITEM_TYPE.BUTTON) {
     flyoutItem.className = 'FlyoutCustomButton';
   } else if (itemProps.type === ITEM_TYPE.RIBBON_ITEM) {
+    flyoutItem.toolbarGroup = itemProps.toolbarGroup;
     flyoutItem.className = 'FlyoutRibbonItem';
     flyoutItem.onClick = () => {
       const currentToolbarGroup = selectors.getCurrentToolbarGroup(store.getState());
       if (currentToolbarGroup !== itemProps.toolbarGroup) {
-        store.dispatch(actions.setToolbarGroup(itemProps.toolbarGroup));
-        const activeGroups = itemProps.groupedItems.map((item) => item?.dataElement);
-        store.dispatch(actions.setCurrentGroupedItem(activeGroups));
+        store.dispatch(actions.setActiveCustomRibbon(itemProps.dataElement));
+        store.dispatch(actions.setActiveGroupedItems(itemProps.groupedItems));
       }
       onClick && onClick();
     };
@@ -72,7 +72,7 @@ export const itemToFlyout = (item, {
     flyoutItem.icon = itemProps.img || undefined;
     flyoutItem.label = itemProps.label || undefined;
   } else if (itemProps.type === ITEM_TYPE.PRESET_BUTTON) {
-    const { label, dataElement, icon } = menuItems[itemProps.buttonType];
+    const { label, dataElement, icon } = menuItems[itemProps.buttonType || itemProps.dataElement];
     flyoutItem.label = label;
     flyoutItem.onClick = () => {
       itemProps.onClick && itemProps.onClick();

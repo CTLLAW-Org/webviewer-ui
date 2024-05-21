@@ -33,6 +33,7 @@ class ToolsOverlay extends React.PureComponent {
     setActiveToolGroup: PropTypes.func.isRequired,
     isInDesktopOnlyMode: PropTypes.bool,
     showPresets: PropTypes.bool,
+    customizableUI: PropTypes.bool,
   };
 
   constructor() {
@@ -122,6 +123,7 @@ class ToolsOverlay extends React.PureComponent {
       isMobile,
       isInDesktopOnlyMode,
       showPresets,
+      customizableUI,
     } = this.props;
 
     const isSmallComponent = window.isApryseWebViewerWebComponent ? isMobileSize() : isMobile;
@@ -183,7 +185,7 @@ class ToolsOverlay extends React.PureComponent {
       );
     }
 
-    if (noPresets && (isSmallComponent && !isInDesktopOnlyMode)) {
+    if ((noPresets && (isSmallComponent && !isInDesktopOnlyMode)) || customizableUI) {
       return null;
     }
 
@@ -246,6 +248,7 @@ const mapStateToProps = (state) => ({
   activeToolName: selectors.getActiveToolName(state),
   isInDesktopOnlyMode: selectors.isInDesktopOnlyMode(state),
   showPresets: selectors.shouldShowPresets(state),
+  customizableUI: state.featureFlags.customizableUI,
 });
 
 const mapDispatchToProps = {

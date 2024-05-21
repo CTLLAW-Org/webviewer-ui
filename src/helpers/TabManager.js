@@ -40,6 +40,27 @@ export const enableMultiTab = () => (dispatch, getState) => {
   setTimeout(() => {
     fireEvent(Events.TAB_MANAGER_READY);
   }, 300);
+
+
+  // In some cases, enabling MultiTab and calling loadDocument can result
+  // in a race condition where the viewer opens an empty multi-tab message
+  // page. To prevent this, we are using a timeout.
+  function docLoadedEvent() {
+    const doc = core.getDocument();
+    const tabs = selectors.getTabs(state);
+    const exist = tabs.some((item) => item.options?.filename === doc.filename);
+    if (!exist) {
+      doc.getFileData().then((data) => {
+        try {
+          tabManager.addTab(new File([data], doc.getFilename()));
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    }
+    core.removeEventListener('documentLoaded', docLoadedEvent);
+  }
+  core.addEventListener('documentLoaded', docLoadedEvent);
 };
 
 export function prepareMultiTab(initialDoc, store) {
@@ -135,6 +156,7 @@ export default class TabManager {
       return console.error(`Tab id not found: ${id}`);
     }
     if (currentTab) {
+      await core.getDocumentViewer().getAnnotationManager().exportAnnotations();
       await core.getDocumentViewer().getAnnotationsLoadedPromise();
     }
     fireEvent(Events['BEFORE_TAB_CHANGED'], {
@@ -372,8 +394,8 @@ export class Tab {
   saveData = {
     annotInDB: false,
     docInDB: false,
-    scrollTop: null, // Float
-    scrollLeft: null, // Float
+    scrollTop: undefined, // Float
+    scrollLeft: undefined, // Float
     page: null, // Int
     annots: null, // XFDF String
   };
@@ -442,6 +464,7 @@ export class Tab {
   }
 
   async saveFileData(db, document) {
+    this.saveData.annotInDB = false;
     const xfdfString = await core.exportAnnotations();
     const data = await document.getFileData({
       xfdfString,
@@ -489,8 +512,10 @@ export class Tab {
 
     const updateScroll = async () => {
       await core.getDocument().getDocumentCompletePromise();
-      docContainer.scrollTop = this.saveData.scrollTop;
-      docContainer.scrollLeft = this.saveData.scrollLeft;
+      docContainer.scrollTo({
+        top: this.saveData.scrollTop,
+        left: this.saveData.scrollLeft,
+      });
     };
 
     viewerState.isNotesPanelOpen && dispatch(actions.openElement('notesPanel'));
@@ -506,7 +531,7 @@ export class Tab {
 
     core.addEventListener('documentLoaded', updateViewer, { once: true });
 
-    this.saveData.scrollTop && core.addEventListener('finishedRendering', updateScroll, { once: true });
+    !isNaN(this.saveData.scrollTop) && core.addEventListener('finishedRendering', updateScroll, { once: true });
     const removeListeners = () => {
       core.removeEventListener('documentLoaded', updateViewer);
       core.removeEventListener('finishedRendering', updateScroll);

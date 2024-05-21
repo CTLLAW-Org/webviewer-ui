@@ -10,6 +10,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import rootReducer from 'reducers/rootReducer';
 import { persistStore } from 'redux-persist';
 import { PersistGate } from 'redux-persist/integration/react';
+import retargetEvents from 'react-shadow-dom-retarget-events';
 
 import core from 'core';
 import actions from 'actions';
@@ -28,14 +29,12 @@ import setAutoSwitch from 'helpers/setAutoSwitch';
 import setUserPermission from 'helpers/setUserPermission';
 import logDebugInfo from 'helpers/logDebugInfo';
 import getHashParameters from 'helpers/getHashParameters';
-import { addDocumentViewer } from 'helpers/documentViewerHelper';
+import { addDocumentViewer, setupOpenURLHandler } from 'helpers/documentViewerHelper';
 import setEnableAnnotationNumbering from 'helpers/setEnableAnnotationNumbering';
-import retargetEvents from 'react-shadow-dom-retarget-events';
+import getRootNode from 'helpers/getRootNode';
+import { setItemToFlyoutStore } from 'helpers/itemToFlyoutHelper';
 
 import './index.scss';
-import getRootNode from 'helpers/getRootNode';
-import openURI from './helpers/openURI';
-import { setItemToFlyoutStore } from 'helpers/itemToFlyoutHelper';
 
 if (window.isApryseWebViewerWebComponent) {
   if (window.webViewerPath.lastIndexOf('/') !== window.webViewerPath.length - 1) {
@@ -163,25 +162,7 @@ if (window.CanvasRenderingContext2D) {
 
   logDebugInfo();
   const documentViewer = addDocumentViewer(1);
-
-  documentViewer.setOpenURIHandler((uri, isOpenInNewWindow) => {
-    store.dispatch(actions.showWarningMessage({
-      title: 'warning.connectToURL.title',
-      message: 'warning.connectToURL.message',
-      onConfirm: () => Promise.resolve(),
-      onSecondary: () => {
-        openURI(uri, isOpenInNewWindow);
-        return Promise.resolve();
-      },
-      confirmBtnText: 'action.cancel',
-      secondaryBtnText: 'action.confirm',
-      secondaryBtnClass: 'secondary-btn-custom',
-      templateStrings: {
-        uri,
-      },
-      modalClass: 'connect-to-url-modal'
-    }));
-  });
+  setupOpenURLHandler(documentViewer, store);
 
   if (getHashParameters('hideDetachedReplies', false)) {
     documentViewer.getAnnotationManager().hideDetachedReplies();
@@ -303,14 +284,17 @@ if (window.CanvasRenderingContext2D) {
 
 
 window.addEventListener('hashchange', () => {
-  window.location.reload();
+  if (!window.isApryseWebViewerWebComponent) {
+    window.location.reload();
+  }
 });
 
 /* The following adds a data attribute to `<html>` when user is keyboard navigating. */
 
 function onTab(event) {
   if (event.key === 'Tab') {
-    document.documentElement.setAttribute('data-tabbing', 'true');
+    const documentElement = window.isApryseWebViewerWebComponent ? getRootNode().host : document.documentElement;
+    documentElement.setAttribute('data-tabbing', 'true');
     window.removeEventListener('keydown', onTab);
     window.addEventListener('mousedown', onMouse);
   }

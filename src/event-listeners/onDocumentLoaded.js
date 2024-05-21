@@ -18,9 +18,12 @@ import { getInstanceNode } from 'helpers/getRootNode';
 import { isOfficeEditorMode } from 'helpers/officeEditor';
 import DataElements from 'constants/dataElement';
 import { getPortfolioFiles } from 'helpers/portfolio';
+import getDefaultPageLabels from 'helpers/getDefaultPageLabels';
 
 let onFirstLoad = true;
 const officeEditorScope = 'office-editor';
+
+const getIsCustomUIEnabled = (store) => getHashParameters('ui', 'default') === 'beta' || selectors.getFeatureFlags(store.getState()).customizableUI;
 
 export default (store, documentViewerKey) => async () => {
   const { dispatch, getState } = store;
@@ -101,8 +104,10 @@ export default (store, documentViewerKey) => async () => {
       });
       doc.getLayersArray().then((layers) => {
         if (layers.length === 0) {
-          dispatch(actions.disableElement('layersPanel', PRIORITY_ONE));
-          dispatch(actions.disableElement('layersPanelButton', PRIORITY_ONE));
+          if (!getIsCustomUIEnabled(store)) {
+            dispatch(actions.disableElement('layersPanel', PRIORITY_ONE));
+            dispatch(actions.disableElement('layersPanelButton', PRIORITY_ONE));
+          }
           setNextActivePanelDueToEmptyCurrentPanel('layersPanel');
         } else {
           dispatch(actions.enableElement('layersPanel', PRIORITY_ONE));
@@ -127,16 +132,16 @@ export default (store, documentViewerKey) => async () => {
     }
 
     const elementsToDisableInOfficeEditor = ['toggleNotesButton', 'toolsHeader', 'viewControlsButton', 'textPopup', 'marqueeToolButton', 'outlinesPanelButton', 'outlinesPanel', 'leftPanel', 'leftPanelButton', 'annotationPopup'];
+    const elementsToEnableInOfficeEditor = [DataElements.OFFICE_EDITOR_TOOLS_HEADER];
     if (isOfficeEditorMode()) {
-      dispatch(actions.setReadOnly(true));
-      dispatch(actions.enableElement('officeEditorToolsHeader', PRIORITY_ONE));
+      dispatch(actions.setIsOfficeEditorMode(true));
+      dispatch(actions.enableElements(elementsToEnableInOfficeEditor, PRIORITY_ONE));
       setZoomLevel(1);
       dispatch(actions.disableElements(
         elementsToDisableInOfficeEditor,
         PRIORITY_ONE, // To allow customers to still disable these elements
       ));
-      dispatch(actions.openElement('officeEditorToolsHeader'));
-      core.setToolMode('TextSelect');
+      dispatch(actions.openElement(DataElements.OFFICE_EDITOR_TOOLS_HEADER));
       hotkeys.unbind('*', officeEditorScope);
       hotkeys.setScope(officeEditorScope);
       const searchShortcutKeys = ShortcutKeys[Shortcuts.SEARCH];
@@ -146,11 +151,11 @@ export default (store, documentViewerKey) => async () => {
         hotkeysManager.keyHandlerMap[searchShortcutKeys],
       );
     } else {
-      dispatch(actions.setReadOnly(false));
       dispatch(actions.enableElements(
         elementsToDisableInOfficeEditor,
         PRIORITY_ONE, // To allow customers to still disable these elements
       ));
+      dispatch(actions.disableElements(elementsToEnableInOfficeEditor, PRIORITY_ONE));
       hotkeys.setScope(defaultHotkeysScope);
     }
 
@@ -198,7 +203,11 @@ export default (store, documentViewerKey) => async () => {
             }
 
             checkIfDocumentClosed();
-            store.dispatch(actions.setPageLabels(pageLabels));
+            const defaultPageLabels = getDefaultPageLabels(totalPageCount);
+            const newPageLabels = selectors.getPageLabels(getState());
+            if (newPageLabels.every((newLabel, index) => newLabel === defaultPageLabels[index])) {
+              store.dispatch(actions.setPageLabels(pageLabels));
+            }
           } catch (e) {
             console.warn(e);
           }

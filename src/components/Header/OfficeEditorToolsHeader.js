@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch, shallowEqual } from 'react-redux';
+import actions from 'actions';
+import selectors from 'selectors';
+import Measure from 'react-measure';
+import core from 'core';
 import Dropdown from 'components/Dropdown';
 import ActionButton from 'components/ActionButton';
 import ToggleElementButton from 'components/ToggleElementButton';
 import DataElementWrapper from 'components/DataElementWrapper';
 import OfficeEditorImageFilePickerHandler from 'components/OfficeEditorImageFilePickerHandler';
-import DataElement from 'constants/dataElement';
-import actions from 'actions';
-import core from 'core';
-import selectors from 'selectors';
 import ColorPickerOverlay from 'components/ColorPickerOverlay';
-import { rgbaToHex } from 'src/helpers/color';
-import openOfficeEditorFilePicker from 'helpers/openOfficeEditorFilePicker';
-import Theme from 'src/constants/theme';
+import Icon from 'components/Icon';
+import OfficeEditorCreateTablePopup from 'components/OfficeEditorCreateTablePopup';
+import DataElement from 'constants/dataElement';
+import Theme from 'constants/theme';
 import {
   LINE_SPACING_OPTIONS,
   JUSTIFICATION_OPTIONS,
@@ -20,52 +21,17 @@ import {
   DEFAULT_POINT_SIZE,
   OFFICE_BULLET_OPTIONS,
   OFFICE_NUMBER_OPTIONS
-} from 'src/constants/officeEditor';
-import Measure from 'react-measure';
-
-import { isSafari, isIOS } from 'helpers/device';
+} from 'constants/officeEditor';
+import openOfficeEditorFilePicker from 'helpers/openOfficeEditorFilePicker';
 
 import './Header.scss';
 import './OfficeHeader.scss';
 
-const availableStylePresetMap = {
-  'Normal Text': {
-    fontSize: '11pt',
-    color: '#000000',
-  },
-  'Title': {
-    fontSize: '26pt',
-    color: '#000000',
-  },
-  'Subtitle': {
-    fontSize: '15pt',
-    color: '#666666',
-  },
-  'Heading 1': {
-    fontSize: '20pt',
-    color: '#000000',
-  },
-  'Heading 2': {
-    fontSize: '16pt',
-    color: '#000000',
-  },
-  'Heading 3': {
-    fontSize: '14pt',
-    color: '#434343',
-  },
-  'Heading 4': {
-    fontSize: '12pt',
-    color: '#666666',
-  },
-  'Heading 5': {
-    fontSize: '11pt',
-    color: '#666666',
-  },
-};
 const availablePointSizes = ['8', '9', '10', '11', '12', '14', '18', '24', '30', '36', '48', '60', '72'];
 const listOptionsWidth = 121;
 const justificationOptionsWidth = 209;
 const moreButtonWidth = 77;
+const officeEditorToggleableStyles = window.Core.Document.OfficeEditorToggleableStyles;
 
 const convertCoreColorToWebViewerColor = (color) => {
   if (!color) {
@@ -80,65 +46,19 @@ const convertCoreColorToWebViewerColor = (color) => {
   );
 };
 
-const focusContent = () => {
-  // On safari, focusing the viewer element makes the screen jump up.
-  // This makes the toolbars disappear, so we don't focus on this platform.
-  if (isSafari || isIOS) {
-    return;
-  }
-  // focus so that after clicking you can still input text
-  core.getViewerElement().focus();
-};
-
-const TextStyles = ({ cursorProperties, isBold, isItalic, isUnderline }) => {
-  return (
-    <>
-      <ActionButton
-        isActive={isBold}
-        onClick={() => {
-          if (core.getOfficeEditor().isTextSelected()) {
-            core.getOfficeEditor().toggleSelectedTextStyle('bold');
-          } else {
-            core.getOfficeEditor().setCursorStyle({ bold: !cursorProperties.bold });
-          }
-          focusContent();
-        }}
-        dataElement='office-editor-bold'
-        title='officeEditor.bold'
-        img='icon-text-bold'
-      />
-      <ActionButton
-        isActive={isItalic}
-        onClick={() => {
-          if (core.getOfficeEditor().isTextSelected()) {
-            core.getOfficeEditor().toggleSelectedTextStyle('italic');
-          } else {
-            core.getOfficeEditor().setCursorStyle({ italic: !cursorProperties.italic });
-          }
-          focusContent();
-        }}
-        dataElement='office-editor-italic'
-        title='officeEditor.italic'
-        img='icon-text-italic'
-      />
-      <ActionButton
-        isActive={isUnderline}
-        onClick={() => {
-          if (core.getOfficeEditor().isTextSelected()) {
-            core.getOfficeEditor().toggleSelectedTextStyle('underline');
-          } else {
-            core.getOfficeEditor().setCursorStyle({
-              underline: cursorProperties.underlineStyle === 'none'
-            });
-          }
-          focusContent();
-        }}
-        dataElement='office-editor-underline'
-        title='officeEditor.underline'
-        img='icon-text-underline'
-      />
-    </>
-  );
+const TextStyles = ({ activeStates }) => {
+  return Object.values(officeEditorToggleableStyles).map((style) => (
+    <ActionButton
+      key={style}
+      isActive={activeStates[style]}
+      onClick={() => {
+        core.getOfficeEditor().updateSelectionAndCursorStyle({ [style]: true });
+      }}
+      dataElement={`office-editor-${style}`}
+      title={`officeEditor.${style}`}
+      img={`icon-text-${style}`}
+    />
+  ));
 };
 
 const JustificationOptions = ({ justification }) => {
@@ -153,8 +73,6 @@ const JustificationOptions = ({ justification }) => {
           core.getOfficeEditor().updateParagraphStyle({
             justification: 'left'
           });
-
-          focusContent();
           core.getDocumentViewer().clearSelection();
         }}
       />
@@ -167,8 +85,6 @@ const JustificationOptions = ({ justification }) => {
           core.getOfficeEditor().updateParagraphStyle({
             justification: 'center'
           });
-
-          focusContent();
           core.getDocumentViewer().clearSelection();
         }}
       />
@@ -181,8 +97,6 @@ const JustificationOptions = ({ justification }) => {
           core.getOfficeEditor().updateParagraphStyle({
             justification: 'right'
           });
-
-          focusContent();
           core.getDocumentViewer().clearSelection();
         }}
       />
@@ -195,8 +109,6 @@ const JustificationOptions = ({ justification }) => {
           core.getOfficeEditor().updateParagraphStyle({
             justification: 'both'
           });
-
-          focusContent();
           core.getDocumentViewer().clearSelection();
         }}
       />
@@ -227,7 +139,6 @@ const ListOptions = ({ listType }) => {
         className='list-style-button'
         onClick={() => {
           core.getOfficeEditor().toggleListSelection(LIST_OPTIONS.Unordered);
-          focusContent();
         }}
       />
       <Dropdown
@@ -237,7 +148,7 @@ const ListOptions = ({ listType }) => {
         onClickItem={(val) => {
           core.getOfficeEditor().setListPreset(val);
         }}
-        className={'list-style-dropdown'}
+        className='list-style-dropdown'
       />
       <ActionButton
         isActive={listType === LIST_OPTIONS.Ordered}
@@ -247,7 +158,6 @@ const ListOptions = ({ listType }) => {
         className='list-style-button'
         onClick={() => {
           core.getOfficeEditor().toggleListSelection(LIST_OPTIONS.Ordered);
-          focusContent();
         }}
       />
       <Dropdown
@@ -257,7 +167,7 @@ const ListOptions = ({ listType }) => {
         onClickItem={(val) => {
           core.getOfficeEditor().setListPreset(val);
         }}
-        className={'list-style-dropdown'}
+        className='list-style-dropdown'
       />
       <ActionButton
         dataElement='office-editor-decrease-indent'
@@ -265,7 +175,6 @@ const ListOptions = ({ listType }) => {
         img='ic-indent-decrease'
         onClick={async () => {
           await core.getOfficeEditor().decreaseIndent();
-          focusContent();
         }}
       />
       <ActionButton
@@ -274,7 +183,6 @@ const ListOptions = ({ listType }) => {
         img='ic-indent-increase'
         onClick={async () => {
           await core.getOfficeEditor().increaseIndent();
-          focusContent();
         }}
       />
     </>
@@ -405,39 +313,6 @@ const OfficeEditorToolsHeader = () => {
   const wvFontColor = convertCoreColorToWebViewerColor(cursorProperties.color);
   const useColorIconBorder = isLightMode ? wvFontColor.toString() === 'rgba(255,255,255,1)' : wvFontColor.toString() === 'rgba(0,0,0,1)';
 
-  const convertCursorToStylePreset = (cursorProperties) => {
-    const {
-      pointSize,
-      color: currentColor
-    } = cursorProperties.paragraphTextStyle || cursorProperties;
-
-    let stylePreset = 'Normal Text';
-    if (!pointSize || !currentColor) {
-      return stylePreset;
-    }
-
-    const fontSize = `${pointSize}pt`;
-    let color = '#000000';
-    if (color) {
-      color = rgbaToHex(
-        currentColor.r,
-        currentColor.g,
-        currentColor.b
-      ).slice(0, -2);
-    }
-
-    Object.keys(availableStylePresetMap).forEach((style) => {
-      if (
-        availableStylePresetMap[style].fontSize === fontSize &&
-        availableStylePresetMap[style].color === color
-      ) {
-        stylePreset = style;
-      }
-    });
-
-    return stylePreset;
-  };
-
   return isOpen ? (
     <DataElementWrapper
       dataElement={DataElement.OFFICE_EDITOR_TOOLS_HEADER}
@@ -466,63 +341,15 @@ const OfficeEditorToolsHeader = () => {
                   ref={measureRef}
                 >
                   <Dropdown
-                    items={Object.keys(availableStylePresetMap)}
-                    onOpened={() => setShowMoreTools(false)}
-                    onClickItem={(item) => {
-                      const stylePreset = availableStylePresetMap[item];
-                      const fontPointSize = parseInt(stylePreset.fontSize, 10);
-                      const fontColor = new window.Core.Annotations.Color(stylePreset.color);
-                      const parsedFontColor = {
-                        r: fontColor.R,
-                        g: fontColor.G,
-                        b: fontColor.B,
-                        a: 255,
-                      };
-
-                      const newTextStyle = {
-                        bold: false,
-                        italic: false,
-                        underline: false,
-                        pointSize: fontPointSize,
-                        color: parsedFontColor
-                      };
-
-                      core.getOfficeEditor().updateParagraphStyle({
-                        textStyle: newTextStyle,
-                      });
-                      core.getOfficeEditor().setCursorStyle(newTextStyle);
-
-                      // setTimeout hack needed because dropdown closing from click is async?
-                      setTimeout(() => {
-                        // focus so that after clicking you can still input text
-                        core.getViewerElement().focus();
-                      });
-                      core.getDocumentViewer().clearSelection();
-                    }}
-                    getCustomItemStyle={(item) => ({ ...availableStylePresetMap[item], padding: '20px 10px', color: 'var(--gray-12)' })}
-                    applyCustomStyleToButton={false}
-                    currentSelectionKey={convertCursorToStylePreset(cursorProperties)}
-                    className="large-dropdown"
-                    dataElement="office-editor-text-format"
-                  />
-                  <Dropdown
                     items={availableFontFaces}
                     onOpened={() => setShowMoreTools(false)}
                     onClickItem={(fontFace) => {
-                      core.getOfficeEditor().isTextSelected() && core.getOfficeEditor().updateSelectionStyle({ fontFace });
-
-                      core.getOfficeEditor().setCursorStyle({ fontFace });
-
-                      // setTimeout hack needed because dropdown closing from click is async?
-                      setTimeout(() => {
-                        // focus so that after clicking you can still input text
-                        core.getViewerElement().focus();
-                      });
+                      core.getOfficeEditor().updateSelectionAndCursorStyle({ fontFace });
                     }}
                     getCustomItemStyle={(item) => ({ ...cssFontValues[item] })}
                     maxHeight={500}
+                    width={200}
                     customDataValidator={(font) => availableFontFaces.includes(font)}
-                    className="large-dropdown"
                     dataElement="office-editor-font"
                     currentSelectionKey={fontFace}
                     hasInput
@@ -543,22 +370,7 @@ const OfficeEditorToolsHeader = () => {
                       if (fontPointSize > 72) {
                         fontPointSize = 72;
                       }
-
-                      if (core.getOfficeEditor().isTextSelected()) {
-                        core.getOfficeEditor().updateSelectionStyle({
-                          pointSize: fontPointSize
-                        });
-                      }
-
-                      core.getOfficeEditor().setCursorStyle({
-                        pointSize: fontPointSize
-                      });
-
-                      // setTimeout hack needed because dropdown closing from click is async?
-                      setTimeout(() => {
-                        // focus so that after clicking you can still input text
-                        core.getViewerElement().focus();
-                      });
+                      core.getOfficeEditor().updateSelectionAndCursorStyle({ pointSize: fontPointSize });
                     }}
                     currentSelectionKey={pointSizeSelectionKey}
                     className="small-dropdown"
@@ -570,10 +382,11 @@ const OfficeEditorToolsHeader = () => {
                     <>
                       <div className="divider" />
                       <TextStyles
-                        cursorProperties={cursorProperties}
-                        isBold={isBold}
-                        isItalic={isItalic}
-                        isUnderline={isUnderline}
+                        activeStates={{
+                          bold: isBold,
+                          italic: isItalic,
+                          underline: isUnderline
+                        }}
                       />
                     </>
                   )}
@@ -595,15 +408,8 @@ const OfficeEditorToolsHeader = () => {
                         b: color.B,
                         a: 255,
                       };
-
-                      core.getOfficeEditor().isTextSelected() && core.getOfficeEditor().updateSelectionStyle({ fontColor });
-
-                      core.getOfficeEditor().setCursorStyle({ fontColor });
-
+                      core.getOfficeEditor().updateSelectionAndCursorStyle({ fontColor });
                       dispatch(actions.closeElements(['colorPickerOverlay']));
-
-                      // focus so that after clicking you can still input text
-                      core.getViewerElement().focus();
                     }}
                     color={wvFontColor}
                   />
@@ -621,12 +427,9 @@ const OfficeEditorToolsHeader = () => {
                       core.getOfficeEditor().updateParagraphStyle({
                         'lineHeightMultiplier': lineSpacing
                       });
-                      core.getOfficeEditor().setCursorStyle({
+                      core.getOfficeEditor().setMainCursorStyle({
                         lineHeight,
                       });
-
-                      // focus so that after clicking you can still input text
-                      core.getViewerElement().focus();
                       core.getDocumentViewer().clearSelection();
                     }}
                     currentSelectionKey={lineHeight}
@@ -642,6 +445,22 @@ const OfficeEditorToolsHeader = () => {
                     )}
                   />
                   <div className="divider" />
+                  <Dropdown
+                    dataElement={DataElement.OFFICE_EDITOR_TOOLS_HEADER_INSERT_TABLE}
+                    className="insert-table-dropdown"
+                    displayButton={(isOpen) => (
+                      <>
+                        <ActionButton
+                          title='officeEditor.table'
+                          img='ic-table'
+                          isActive={isOpen}
+                        />
+                        <Icon className="arrow" glyph={`icon-chevron-${isOpen ? 'up' : 'down'}`} />
+                      </>
+                    )}
+                  >
+                    <OfficeEditorCreateTablePopup />
+                  </Dropdown>
                   <>
                     <ActionButton
                       className="tool-group-button"
@@ -650,7 +469,6 @@ const OfficeEditorToolsHeader = () => {
                       img='icon-tool-image-line'
                       onClick={() => {
                         openOfficeEditorFilePicker();
-                        focusContent();
                       }}
                     />
                     <OfficeEditorImageFilePickerHandler />
@@ -679,10 +497,11 @@ const OfficeEditorToolsHeader = () => {
                               {(visibleGroupCount < 4) && (
                                 <>
                                   <TextStyles
-                                    cursorProperties={cursorProperties}
-                                    isBold={isBold}
-                                    isItalic={isItalic}
-                                    isUnderline={isUnderline}
+                                    activeStates={{
+                                      bold: isBold,
+                                      italic: isItalic,
+                                      underline: isUnderline
+                                    }}
                                   />
                                   <div className="divider" />
                                 </>

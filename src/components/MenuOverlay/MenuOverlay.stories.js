@@ -16,7 +16,7 @@ const initialState = {
       menuOverlay: true
     },
     customPanels: [],
-    customFlxPanels: [],
+    genericPanels: [],
     menuOverlay: [
       { 'dataElement': 'newDocumentButton' },
       { 'dataElement': 'filePickerButton' },
@@ -27,6 +27,9 @@ const initialState = {
       { 'dataElement': 'themeChangeButton' },
       { 'dataElement': 'languageButton' }
     ]
+  },
+  featureFlags: {
+    customizableUI: false,
   },
 };
 const store = configureStore({

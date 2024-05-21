@@ -19,14 +19,18 @@ class HeaderItems extends React.PureComponent {
     isToolGroupReorderingEnabled: PropTypes.bool.isRequired,
     items: PropTypes.arrayOf(PropTypes.object).isRequired,
     isInDesktopOnlyMode: PropTypes.bool,
+    isOfficeEditorMode: PropTypes.bool,
   };
 
   render() {
-    const { items, isToolGroupReorderingEnabled, isInDesktopOnlyMode } = this.props;
+    const { items, isToolGroupReorderingEnabled, isInDesktopOnlyMode, isOfficeEditorMode } = this.props;
     let handledToolGroupButtons = false;
 
     const headers = items.map((item, i) => {
-      const { type, dataElement, hidden, hiddenOnMobileDevice } = item;
+      const { type, dataElement, hidden, hiddenOnMobileDevice, isOfficeEditorOnly } = item;
+      if (isOfficeEditorOnly && !isOfficeEditorMode) {
+        return null;
+      }
       let mediaQueryClassName = hidden
         ? hidden
           .map((screen) => {

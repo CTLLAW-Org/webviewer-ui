@@ -14,6 +14,7 @@ import {
   button8,
   button9,
 } from '../Helpers/mockHeaders';
+import { mockModularComponents } from '../AppStories/mockAppState';
 
 export default {
   title: 'ModularComponents/ModularHeader',
@@ -28,12 +29,18 @@ export default {
 
 const initialState = {
   viewer: {
-    modularHeaders: [],
+    modularHeaders: {},
     customElementOverrides: {},
     disabledElements: [],
     openElements: {},
     customPanels: [],
     flyoutMap: {},
+    lastPickedToolForGroupedItems: {},
+    modularComponents: {
+      ...mockModularComponents,
+      button8,
+      button9,
+    },
   },
 };
 

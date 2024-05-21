@@ -3,7 +3,7 @@ import Draggable from 'react-draggable';
 import classNames from 'classnames';
 import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import debounce from 'lodash/debounce';
-
+import PropTypes from 'prop-types';
 import Element from 'components/Element';
 import ColorPalette from 'components/ColorPalette';
 import Button from 'components/Button';
@@ -11,6 +11,7 @@ import HorizontalDivider from 'components/HorizontalDivider';
 import { isMobile } from 'helpers/device';
 import core from 'core';
 import getRichTextPopupPosition from 'helpers/getRichTextPopupPosition';
+import adjustFreeTextBoundingBox from 'helpers/adjustFreeTextBoundingBox';
 import MathSymbolsPicker from '../MathSymbolsPicker';
 import ColorPalettePicker from 'components/ColorPalettePicker';
 
@@ -22,6 +23,12 @@ import DataElements from 'constants/dataElement';
 import i18next from 'i18next';
 import Icon from 'components/Icon';
 import TextStylePicker from 'components/TextStylePicker';
+import handleFreeTextAutoSizeToggle from 'src/helpers/handleFreeTextAutoSizeToggle';
+
+const propTypes = {
+  annotation: PropTypes.object,
+  editor: PropTypes.object,
+};
 
 const RichTextPopup = ({ annotation, editor }) => {
   const [
@@ -59,10 +66,12 @@ const RichTextPopup = ({ annotation, editor }) => {
   const dispatch = useDispatch();
   const oldSelectionRef = useRef();
   const symbolsAreaHeight = 150; // max height for the math symbols area
+  const [isAutoSizeFont, setAutoSizeFont] = useState(annotation.isAutoSizeFont());
 
   useEffect(() => {
     // Have to disable instead of closing because annotation popup will reopen itself
     dispatch(actions.disableElements([DataElements.ANNOTATION_STYLE_POPUP]));
+    dispatch(actions.closeElement(DataElements.ANNOTATION_POPUP));
     return () => {
       dispatch(actions.enableElements([DataElements.ANNOTATION_STYLE_POPUP]));
     };
@@ -113,16 +122,20 @@ const RichTextPopup = ({ annotation, editor }) => {
       console.error(err);
     }
     const richTextStyles = annotation.getRichTextStyle();
+    const stylesTemp = richTextStyles[0];
     propertiesRef.current = {
       Font: annotation.Font,
       FontSize: annotation.FontSize,
       TextAlign: annotation.TextAlign,
       TextVerticalAlign: annotation.TextVerticalAlign,
-      bold: richTextStyles?.[0]?.['font-weight'] === 'bold' ?? false,
-      italic: richTextStyles?.[0]?.['font-style'] === 'italic' ?? false,
-      underline: richTextStyles?.[0]?.['text-decoration']?.includes('underline') || richTextStyles?.[0]?.['text-decoration']?.includes('word'),
-      strikeout: richTextStyles?.[0]?.['text-decoration']?.includes('line-through') ?? false,
+      bold: stylesTemp?.['font-weight'] === 'bold' ?? false,
+      italic: stylesTemp?.['font-style'] === 'italic' ?? false,
+      underline: stylesTemp?.['text-decoration']?.includes('underline') || stylesTemp?.['text-decoration']?.includes('word'),
+      strikeout: stylesTemp?.['text-decoration']?.includes('line-through') ?? false,
+      size: stylesTemp?.['font-size'],
+      font: stylesTemp?.['font-family'],
       StrokeStyle,
+      calculatedFontSize: annotation.getCalculatedFontSize()
     };
 
     setFormat(getFormat(editorRef.current?.getSelection()));
@@ -217,7 +230,11 @@ const RichTextPopup = ({ annotation, editor }) => {
   };
 
   const applyFormat = (formatKey, value) => {
-    editorRef.current?.format(formatKey, value);
+    if (formatKey === 'size') {
+      editorRef.current?.format('applyCustomFontSize', value);
+    } else {
+      editorRef.current?.format(formatKey, value);
+    }
 
     if (formatKey === 'color') {
       value = new window.Core.Annotations.Color(value);
@@ -259,18 +276,6 @@ const RichTextPopup = ({ annotation, editor }) => {
   const openTextStyle = () => toggleMenuItem(DataElements.STYLE_POPUP_TEXT_STYLE_CONTAINER);
   const openColors = () => toggleMenuItem(DataElements.STYLE_POPUP_COLORS_CONTAINER);
 
-  const adjustFreeTextBoundingBox = (annotation) => {
-    const { FreeTextAnnotation } = window.Core.Annotations;
-    if (annotation instanceof FreeTextAnnotation && annotation.getAutoSizeType() !== FreeTextAnnotation.AutoSizeTypes.NONE) {
-      const doc = core.getDocument();
-      const pageNumber = annotation['PageNumber'];
-      const pageInfo = doc.getPageInfo(pageNumber);
-      const pageMatrix = doc.getPageMatrix(pageNumber);
-      const pageRotation = doc.getPageRotation(pageNumber);
-      annotation.fitText(pageInfo, pageMatrix, pageRotation);
-    }
-  };
-
   const onPropertyChange = (property, value) => {
     const { index, length } = editorRef.current.getSelection();
     const annotation = annotationRef.current;
@@ -286,20 +291,34 @@ const RichTextPopup = ({ annotation, editor }) => {
     }, 0);
   };
 
-  const onRichTextStyleChange = (property) => {
+  const onRichTextStyleChange = (property, value) => {
     const propertyTranslation = {
       'font-weight': 'bold',
       'font-style': 'italic',
       'underline': 'underline',
       'line-through': 'strike',
+      'font-family': 'font',
+      'font-size': 'size',
     };
-    handleTextFormatChange(propertyTranslation[property])();
+    if (property === 'font-family' || property === 'font-size') {
+      applyFormat(propertyTranslation[property], value);
+      const annotation = annotationRef.current;
+      if (annotation.isAutoSized()) {
+        const editBoxManager = core.getAnnotationManager().getEditBoxManager();
+        editBoxManager.resizeAnnotation(annotation);
+      }
+    } else {
+      handleTextFormatChange(propertyTranslation[property])();
+    }
   };
+
 
   propertiesRef.current.bold = format.bold;
   propertiesRef.current.italic = format.italic;
   propertiesRef.current.underline = format.underline;
   propertiesRef.current.strikeout = format.strike;
+  propertiesRef.current.quillFont = format.font || propertiesRef.current.Font;
+  propertiesRef.current.quillFontSize = format.originalSize || propertiesRef.current.FontSize;
 
   // TODO for now don't show it in mobile
   return isDisabled || (isMobile() && !isInDesktopOnlyMode) ? null : (
@@ -385,6 +404,10 @@ const RichTextPopup = ({ annotation, editor }) => {
                     onRichTextStyleChange={onRichTextStyleChange}
                     properties={propertiesRef.current}
                     stateless={true}
+                    isFreeText={true}
+                    onFreeTextSizeToggle={() => handleFreeTextAutoSizeToggle(annotation, setAutoSizeFont, isAutoSizeFont)}
+                    isFreeTextAutoSize={isAutoSizeFont}
+                    isRichTextEditMode={true}
                   />
                 </div>
               )}
@@ -397,8 +420,8 @@ const RichTextPopup = ({ annotation, editor }) => {
                   <Icon glyph={`icon-chevron-${isColorPickerOpen ? 'up' : 'down'}`} />
                 </div>
               }
-            </>)
-        }
+            </>
+            )}
         {!isPaletteDisabled && (legacyPopup || isColorPickerOpen) && (
           <>
             <ColorPalette
@@ -423,5 +446,7 @@ const RichTextPopup = ({ annotation, editor }) => {
     </Draggable>
   );
 };
+
+RichTextPopup.propTypes = propTypes;
 
 export default React.memo(RichTextPopup);

@@ -37,7 +37,7 @@
       height: 32px;
 
       .Icon {
-        color: var(--view-header-icon-active-fill);
+        color: var(--icon-color);
         width: 12px;
         height: 12px;
       }
@@ -64,6 +64,14 @@
   .Button.zoomButton {
     background: none !important;
   }
+
+  &.size1 {
+    background: none !important;
+    .Button:hover,
+    .Button.active {
+      background-color: var(--view-header-button-active) !important;
+    }
+  }
 }
 
 .Flyout .ZoomFlyoutMenu {
@@ -86,7 +94,6 @@
     display: flex;
     align-items: center;
     height: 24px;
-    padding: 0 0 0 10px;
     cursor: pointer;
     width: 100%;
 

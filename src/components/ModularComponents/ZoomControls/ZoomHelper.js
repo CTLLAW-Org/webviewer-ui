@@ -16,18 +16,25 @@ export const getZoomFlyoutItems = (zoomOptionsList, dispatch, size = 0, onZoomCh
     icon: 'icon-header-zoom-fit-to-width',
     label: 'action.fitToWidth',
     title: 'action.fitToWidth',
-    onClick: fitToWidth,
+    onClick: () => {
+      fitToWidth();
+      dispatch(actions.closeElement('zoom-containerFlyout'));
+    },
     className: 'fitToWidthButton',
   };
   const fitToPageButton = {
     icon: 'icon-header-zoom-fit-to-page',
     label: 'action.fitToPage',
     title: 'action.fitToPage',
-    onClick: fitToPage,
+    onClick: () => {
+      fitToPage();
+      dispatch(actions.closeElement('zoom-containerFlyout'));
+    },
     type: 'customButton',
     className: 'fitToPageButton'
   };
   const marqueeButton = {
+    dataElement: 'zoom-button-marquee-zoom',
     icon: 'icon-header-zoom-marquee',
     toolName: 'MarqueeZoomTool',
     label: 'tool.Marquee',
@@ -86,11 +93,11 @@ export const getZoomFlyoutItems = (zoomOptionsList, dispatch, size = 0, onZoomCh
 export const getZoomHandlers = (zoomOptionsList, dispatch, size = 0, onZoomChanged = noop) => {
   const onClickZoomLevelOption = (zoomLevel) => {
     zoomTo(zoomLevel);
-    size === 0 && dispatch(actions.closeElement('zoomFlyoutMenu'));
+    (size === 0 || size === 1) && dispatch(actions.closeElement('zoom-containerFlyout'));
   };
 
   const onMarqueeZoom = () => {
-    dispatch(actions.closeElement('zoomFlyoutMenu'));
+    dispatch(actions.closeElement('zoom-containerFlyout'));
   };
 
   const getCurrentZoom = () => {

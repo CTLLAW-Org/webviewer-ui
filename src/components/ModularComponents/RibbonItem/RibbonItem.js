@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import selectors from 'selectors';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
@@ -6,16 +6,18 @@ import actions from 'actions';
 import PropTypes from 'prop-types';
 import Button from 'components/Button';
 import classNames from 'classnames';
+import getToolbarTranslationString from 'helpers/translationKeyMapping';
 import { JUSTIFY_CONTENT, DIRECTION } from 'constants/customizationVariables';
+import defaultTool from 'constants/defaultTool';
 
 import './RibbonItem.scss';
 import sizeManager from 'helpers/responsivnessHelper';
 import { innerItemToFlyoutItem } from 'helpers/itemToFlyoutHelper';
-
+import core from 'core';
 
 const RibbonItem = (props) => {
   const elementRef = useRef();
-  const { t } = useTranslation();
+  const { t, ready: tReady } = useTranslation();
   const dispatch = useDispatch();
   const {
     dataElement,
@@ -23,16 +25,29 @@ const RibbonItem = (props) => {
     disabled,
     img,
     label,
-    toolbarGroup,
     groupedItems = [],
     direction,
     justifyContent,
     isFlyoutItem,
-    iconDOMElement
+    iconDOMElement,
+    toolbarGroup
   } = props;
-  const [currentToolbarGroup] = useSelector((state) => [
-    selectors.getCurrentToolbarGroup(state),
+
+  const [
+    activeGroupedItems,
+    activeCustomRibbon,
+    lastPickedToolForGroupedItems,
+    isRibbonItemDisabled,
+    customHeadersAdditionalProperties,
+  ] = useSelector((state) => [
+    selectors.getActiveGroupedItems(state),
+    selectors.getActiveCustomRibbon(state),
+    selectors.getLastPickedToolForGroupedItems(state, groupedItems),
+    selectors.isElementDisabled(state, dataElement),
+    selectors.getCustomHeadersAdditionalProperties(state),
   ]);
+
+  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     if (elementRef.current) {
@@ -45,21 +60,42 @@ const RibbonItem = (props) => {
   }, []);
 
   useEffect(() => {
-    if (currentToolbarGroup === toolbarGroup) {
-      const activeGroups = groupedItems.map((item) => item?.dataElement);
-      dispatch(actions.setCurrentGroupedItem(activeGroups));
+    const someActiveGroupedItemsBelongToCurrentRibbonItem = activeGroupedItems?.some((item) => groupedItems.includes(item));
+    if (activeCustomRibbon === dataElement && (someActiveGroupedItemsBelongToCurrentRibbonItem || !activeGroupedItems?.length)) {
+      setIsActive(true);
+    } else {
+      setIsActive(false);
     }
-  }, []);
-
-  const isActive = currentToolbarGroup === toolbarGroup;
+  }, [activeGroupedItems, activeCustomRibbon, lastPickedToolForGroupedItems]);
 
   const onClick = () => {
+    if (groupedItems.length < 1) {
+      core.setToolMode(defaultTool);
+    }
     if (!isActive) {
-      dispatch(actions.setToolbarGroup(toolbarGroup));
-      const activeGroups = groupedItems.map((item) => item?.dataElement);
-      dispatch(actions.setCurrentGroupedItem(activeGroups));
+      dispatch(actions.setActiveGroupedItems(groupedItems));
+      dispatch(actions.setActiveCustomRibbon(dataElement));
+      dispatch(actions.setLastPickedToolAndGroup({
+        tool: lastPickedToolForGroupedItems,
+        group: groupedItems
+      }));
+      setIsActive(true);
+      core.setToolMode(lastPickedToolForGroupedItems);
+
+      if (groupedItems.length < 1) {
+        core.getFormFieldCreationManager().endFormFieldCreationMode();
+        core.getContentEditManager().endContentEditMode();
+      }
     }
   };
+
+  if (isRibbonItemDisabled) {
+    return null;
+  }
+
+  const translatedLabel = tReady && toolbarGroup ?
+    t(getToolbarTranslationString(toolbarGroup, customHeadersAdditionalProperties))
+    : label;
 
   return (
     isFlyoutItem ?
@@ -67,7 +103,7 @@ const RibbonItem = (props) => {
         innerItemToFlyoutItem({
           isDisabled: false,
           icon: iconDOMElement,
-          label: t(label),
+          label: translatedLabel,
         }, onClick)
       ) :
       (
@@ -83,8 +119,9 @@ const RibbonItem = (props) => {
             isActive={isActive}
             dataElement={dataElement}
             img={img}
-            label={label}
-            title={title}
+            label={translatedLabel}
+            title={translatedLabel || title}
+            useI18String={false}
             onClick={onClick}
             disabled={disabled}
           >
@@ -100,8 +137,6 @@ RibbonItem.propTypes = {
   disabled: PropTypes.bool,
   img: PropTypes.string,
   label: PropTypes.string,
-  getCurrentToolbarGroup: PropTypes.func,
-  toolbarGroup: PropTypes.string,
   groupedItems: PropTypes.array,
   direction: PropTypes.string,
   justifyContent: PropTypes.string,

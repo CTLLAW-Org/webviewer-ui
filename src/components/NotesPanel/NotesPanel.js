@@ -38,6 +38,10 @@ const NotesPanel = ({
   setIsMultiSelectedMap,
   scrollToSelectedAnnot,
   setScrollToSelectedAnnot,
+  isCustomPanel,
+  isCustomPanelOpen,
+  isLeftSide,
+  parentDataElement,
 }) => {
   const [
     sortStrategy,
@@ -61,7 +65,7 @@ const NotesPanel = ({
       selectors.isElementDisabled(state, DataElements.NOTES_PANEL),
       selectors.getPageLabels(state),
       selectors.getCustomNoteFilter(state),
-      selectors.getNotesPanelWidth(state),
+      parentDataElement ? selectors.getPanelWidth(state, parentDataElement) : selectors.getNotesPanelWidth(state),
       selectors.getNotesInLeftPanel(state),
       selectors.isDocumentReadOnly(state),
       selectors.isAnnotationNumberingEnabled(state),
@@ -73,6 +77,10 @@ const NotesPanel = ({
     ],
     shallowEqual,
   );
+
+  // This actually gets overwritten in NotesPanelHeader.js, which is fine
+  const disableFilterAnnotation = false;
+
   const currentWidth = currentLeftPanelWidth || currentNotesPanelWidth;
 
   const dispatch = useDispatch();
@@ -250,7 +258,7 @@ const NotesPanel = ({
     // this function needs to be called by a Note component whenever its height changes
     // to clear the cache(used by react-virtualized) and recompute the height so that each note
     // can have the correct position
-    resize = () => {},
+    resize = () => { },
   ) => {
     let listSeparator = null;
     const { shouldRenderSeparator, getSeparatorContent } = getSortStrategies()[sortStrategy];
@@ -284,7 +292,6 @@ const NotesPanel = ({
       pendingReplyMap,
       setPendingReply,
       isDocumentReadOnly,
-      isNotePanelOpen: isOpen || notesInLeftPanel,
       onTopNoteContentClicked: handleNoteClicked,
       isExpandedFromSearch: onlyReplyContainsSearchInput(currNote),
       scrollToSelectedAnnot,
@@ -314,6 +321,8 @@ const NotesPanel = ({
         {listSeparator}
         <NoteContext.Provider value={contextValue}>
           <Note
+            isCustomPanelOpen={isCustomPanelOpen}
+            shouldHideConnectorLine={isLeftSide}
             annotation={currNote}
             isMultiSelected={!!isMultiSelectedMap[currNote.Id]}
             isMultiSelectMode={isMultiSelectMode}
@@ -401,11 +410,12 @@ const NotesPanel = ({
   }
 
   let style = {};
-  if (isInDesktopOnlyMode || !isMobile) {
+  if (!isCustomPanel && (isInDesktopOnlyMode || !isMobile)) {
     style = { width: `${currentWidth}px`, minWidth: `${currentWidth}px` };
   }
 
-  const showNotePanel = !isDisabled && (isOpen || notesInLeftPanel);
+  const showNotePanel = !isDisabled && (isOpen || notesInLeftPanel || isCustomPanel);
+
   return !showNotePanel ? null : (
     <div className="notes-panel-container">
       <div
@@ -432,7 +442,7 @@ const NotesPanel = ({
         <React.Fragment>
           <NotesPanelHeader
             notes={notesToRender}
-            disableFilterAnnotation={notes.length === 0}
+            disableFilterAnnotation={disableFilterAnnotation}
             setSearchInputHandler={setSearchInput}
             isMultiSelectMode={isMultiSelectMode}
             toggleMultiSelectMode={toggleMultiSelectMode}

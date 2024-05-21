@@ -15,6 +15,9 @@ const DataElements = {
   FONT_SIZE_SLIDER: 'fontSizeSlider',
   STYLE_OPTION: 'styleOption',
   STYLE_POPUP: 'stylePopup',
+  STYLE_PANEL: 'stylePanel',
+  SIGNATURE_LIST_PANEL: 'signatureListPanel',
+  RUBBER_STAMP_PANEL: 'rubberStampPanel',
   SCALE_INPUT_CONTAINER: 'scaleInputContainer',
   PRECISION_INPUT_CONTAINER: 'precisionInputContainer',
   STYLE_POPUP_TEXT_STYLE_CONTAINER: 'stylePopupTextStyleContainer',
@@ -50,9 +53,13 @@ const DataElements = {
   COMPARE_PANEL: 'comparePanel',
   PORTFOLIO_PANEL: 'portfolioPanel',
   PORTFOLIO_PANEL_BUTTON: 'portfolioPanelButton',
+  LAYERS_PANEL: 'layersPanel',
+  SIGNATURE_PANEL: 'signaturePanel',
+  ATTACHMENT_PANEL: 'attachmentPanel',
   PORTFOLIO_ADD_FILE: 'portfolioAddFile',
   PORTFOLIO_ADD_FOLDER: 'portfolioAddFolder',
   PORTFOLIO_ADD_NEW_BUTTON: 'portfolioAddNewButton',
+  RICH_TEXT_STYLE_CONTAINER: 'richTextStyleContainer',
   CALIBRATION_POPUP_BUTTON: 'calibratePopupButton',
   CALIBRATION_MODAL: 'calibrationModal',
 
@@ -76,6 +83,7 @@ const DataElements = {
   MENU_OVERLAY_BUTTON: 'menuButton',
   ZOOM_OVERLAY: 'zoomOverlay',
   ZOOM_OVERLAY_BUTTON: 'zoomOverlayButton',
+  TRACK_CHANGE_OVERLAY_BUTTON: 'trackChangeOverlayButton',
   PAGE_MANIPULATION_OVERLAY: 'pageManipulationOverlay',
   PAGE_MANIPULATION_OVERLAY_BUTTON: 'pageManipulationOverlayButton',
   TOOLS_OVERLAY: 'toolsOverlay',
@@ -83,6 +91,7 @@ const DataElements = {
   SIGNATURE_OVERLAY: 'signatureOverlay',
   REDACTION_OVERLAY: 'redactionOverlay',
   ANNOTATION_CONTENT_OVERLAY: 'annotationContentOverlay',
+  THUMBNAILS_PANEL: 'thumbnailsPanel',
   THUMBNAILS_CONTROL_ROTATE_POPUP_TRIGGER: 'thumbnailsControlRotatePopupTrigger',
   THUMBNAILS_CONTROL_MANIPULATE_POPUP: 'thumbnailsControlManipulatePopup',
   THUMBNAILS_CONTROL_MANIPULATE_POPUP_TRIGGER: 'thumbnailsControlManipulatePopupTrigger',
@@ -106,9 +115,15 @@ const DataElements = {
   INLINE_COMMENT_POPUP: 'inlineCommentPopup',
   TOOL_STYLE_POPUP: 'toolStylePopup',
   RICH_TEXT_POPUP: 'richTextPopup',
+  RICH_TEXT_EDITOR: 'richTextEditor',
   AUDIO_PLAYBACK_POPUP: 'audioPlaybackPopup',
   DOCUMENT_CROP_POPUP: 'documentCropPopup',
   SNIPPING_TOOL_POPUP: 'snippingToolPopup',
+  LINK_ANNOTATION_POPUP: 'linkAnnotationPopup',
+  LINK_ANNOTATION_UNLINK_BUTTON: 'linkAnnotationUnlinkButton',
+  LINK_URI: 'linkUri',
+  EMBEDDED_JS_POPUP: 'embeddedJsPopup',
+  MAIN_MENU: 'MainMenuFlyout',
 
   // Modals
   PAGE_REDACT_MODAL: 'pageRedactionModal',
@@ -180,6 +195,18 @@ const DataElements = {
   OFFICE_EDITOR_TOOLS_HEADER: 'officeEditorToolsHeader',
   OFFICE_EDITOR_TOOLS_HEADER_INSERT_IMAGE: 'officeEditorToolsHeaderInsertImage',
   OFFICE_EDITOR_FILE_NAME: 'officeEditorFileName',
+  OFFICE_EDITOR_CUT: 'officeEditorCut',
+  OFFICE_EDITOR_COPY: 'officeEditorCopy',
+  OFFICE_EDITOR_PASTE: 'officeEditorPaste',
+  OFFICE_EDITOR_PASTE_WITHOUT_FORMATTING: 'officeEditorPasteWithoutFormatting',
+  OFFICE_EDITOR_DELETE: 'officeEditorDelete',
+  OFFICE_EDITOR_INSERT_ROW_ABOVE: 'officeEditorInsertRowAbove',
+  OFFICE_EDITOR_INSERT_ROW_BELOW: 'officeEditorInsertRowBelow',
+  OFFICE_EDITOR_INSERT_COLUMN_RIGHT: 'officeEditorInsertColumnRight',
+  OFFICE_EDITOR_INSERT_COLUMN_LEFT: 'officeEditorInsertColumnLeft',
+  OFFICE_EDITOR_DELETE_ROW: 'officeEditorDeleteRow',
+  OFFICE_EDITOR_DELETE_COLUMN: 'officeEditorDeleteColumn',
+  OFFICE_EDITOR_DELETE_TABLE: 'officeEditorDeleteTable',
 
   // Insert Page Modal tabs
   INSERT_BLANK_PAGE_TAB: 'insertBlankPagePanelButton',
@@ -226,6 +253,10 @@ const DataElements = {
   PRINT_PRESET_BUTTON: 'printPresetButton',
   CREATE_PORTFOLIO_PRESET_BUTTON: 'createPortfolioPresetButton',
   SETTINGS_PRESET_BUTTON: 'settingsPresetButton',
+  FORM_FIELD_EDIT_PRESET_BUTTON: 'formFieldEditPresetButton',
+
+  // Rubber Stamp Panel
+  CREATE_RUBBER_STAMP_BUTTON: 'createRubberStampButton',
 };
 
 DataElements.TOOLBAR_GROUPS = [

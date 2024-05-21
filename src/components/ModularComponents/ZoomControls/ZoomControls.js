@@ -88,7 +88,7 @@ function ZoomControls(props) {
             <ToggleElementButton
               dataElement="zoom-toggle-button"
               className="zoomToggleButton"
-              title="Zoom Toggle Button"
+              title={t('option.settings.zoomOptions')}
               disabled={false}
               img={`icon-chevron-${isZoomFlyoutMenuActive ? 'up' : 'down'}`}
               toggleElement={`${dataElement}Flyout`}
@@ -116,7 +116,7 @@ function ZoomControls(props) {
         <ToggleElementButton
           dataElement="zoom-toggle-button"
           className="zoomToggleButton"
-          title="Zoom Toggle Button"
+          title={t('option.settings.zoomOptions')}
           disabled={false}
           img="icon-magnifying-glass"
           toggleElement={`${dataElement}Flyout`}

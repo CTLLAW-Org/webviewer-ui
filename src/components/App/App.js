@@ -1,7 +1,7 @@
 import { hot } from 'react-hot-loader/root';
 import React, { useEffect } from 'react';
 import classNames from 'classnames';
-import { useDispatch, useSelector, useStore } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector, useStore } from 'react-redux';
 import PropTypes from 'prop-types';
 import selectors from 'selectors';
 import core from 'core';
@@ -11,18 +11,17 @@ import LogoBar from 'components/LogoBar';
 import Accessibility from 'components/Accessibility';
 import Header from 'components/Header';
 import DocumentContainer from 'components/DocumentContainer';
-import LeftPanel from 'components/LeftPanel';
 import RightPanel from 'components/RightPanel';
 import FilePickerHandler from 'components/FilePickerHandler';
 import CopyTextHandler from 'components/CopyTextHandler';
 import PrintHandler from 'components/PrintHandler';
 import FontHandler from 'components/FontHandler';
-import RedactionPanel from 'components/RedactionPanel';
 import TextEditingPanel from 'components/TextEditingPanel';
 import Wv3dPropertiesPanel from 'components/Wv3dPropertiesPanel';
 import AudioPlaybackPopup from 'components/AudioPlaybackPopup';
 import DocumentCropPopup from 'components/DocumentCropPopup';
 import SnippingToolPopup from '../SnippingToolPopup';
+import EmbeddedJSPopup from 'components/EmbeddedJSPopup';
 import FormFieldIndicatorContainer from 'components/FormFieldIndicator';
 import MultiTabEmptyPage from 'components/MultiTabEmptyPage';
 import MultiViewer from 'components/MultiViewer';
@@ -34,16 +33,12 @@ import LeftHeader from 'components/ModularComponents/LeftHeader';
 import RightHeader from 'components/ModularComponents/RightHeader';
 import BottomHeader from 'components/ModularComponents/BottomHeader';
 import TopHeader from 'components/ModularComponents/TopHeader';
-import GenericOutlinesPanel from 'components/ModularComponents/GenericOutlinesPanel';
 import FlyoutContainer from 'components/ModularComponents/FlyoutContainer';
 import RibbonOverflowFlyout from 'components/ModularComponents/RibbonOverflowFlyout';
-import GroupedToolsOverflowFlyout from 'components/ModularComponents/GroupedToolsOverflowFlyout';
 import ViewControlsFlyout from 'components/ModularComponents/ViewControls/ViewControlsFlyout';
 import MainMenu from 'components/ModularComponents/MainMenu/MainMenuFlyout';
 import ProgressModal from 'components/ProgressModal';
 import LazyLoadWrapper, { LazyLoadComponents } from 'components/LazyLoadWrapper';
-import StylePanel from 'components/StylePanel';
-
 import useOnTextSelected from 'hooks/useOnTextSelected';
 import useOnContextMenuOpen from 'hooks/useOnContextMenuOpen';
 import useOnAnnotationPopupOpen from 'hooks/useOnAnnotationPopupOpen';
@@ -53,7 +48,10 @@ import useOnMeasurementToolOrAnnotationSelected from 'hooks/useOnMeasurementTool
 import useOnInlineCommentPopupOpen from 'hooks/useOnInlineCommentPopupOpen';
 import useOnRightClickAnnotation from 'hooks/useOnRightClickAnnotation';
 import useOnAnnotationContentOverlayOpen from 'hooks/useOnAnnotationContentOverlayOpen';
-
+import useOnLinkAnnotationPopupOpen from 'hooks/useOnLinkAnnotationPopupOpen';
+import useOnAnnotationCreateSignatureToolMode from 'hooks/useOnAnnotationCreateSignatureToolMode';
+import useOnAnnotationCreateRubberStampToolMode from 'hooks/useOnAnnotationCreateRubberStampToolMode';
+import useOnRedactionAnnotationChanged from 'hooks/useOnRedactionAnnotationChanged';
 import loadDocument from 'helpers/loadDocument';
 import getHashParameters from 'helpers/getHashParameters';
 import fireEvent from 'helpers/fireEvent';
@@ -61,24 +59,23 @@ import { prepareMultiTab } from 'helpers/TabManager';
 import hotkeysManager from 'helpers/hotkeysManager';
 import setDefaultDisabledElements from 'helpers/setDefaultDisabledElements';
 import { getInstanceNode } from 'helpers/getRootNode';
-import { isOfficeEditorMode } from 'helpers/officeEditor';
 import { isMobileDevice } from 'helpers/device';
 
 import Events from 'constants/events';
 import overlays from 'constants/overlays';
 import { panelNames } from 'constants/panel';
 import DataElements from 'constants/dataElement';
+import { defaultPanels } from '../../redux/modularComponents';
 
 import setLanguage from 'src/apis/setLanguage';
-
+import { loadDefaultFonts } from 'src/helpers/loadFont';
 import './App.scss';
-import SignaturePanel from 'components/SignaturePanel';
-import BookmarksPanel from 'components/BookmarksPanel';
-import FileAttachmentPanel from 'components/FileAttachmentPanel';
-import ThumbnailsPanel from 'components/ThumbnailsPanel';
 import LayersPanel from 'components/LayersPanel';
 import MultiViewerWrapper from 'components/MultiViewer/MultiViewerWrapper';
-import TextEditingWrapper from 'components/TextEditingPanel/TextEditingWrapper';
+import FeatureFlags from 'constants/featureFlags';
+import { PRIORITY_ONE } from 'constants/actionPriority';
+import TabsHeader from 'components/TabsHeader';
+import useTabFocus from 'hooks/useTabFocus';
 
 // TODO: Use constants
 const tabletBreakpoint = window.matchMedia('(min-width: 641px) and (max-width: 900px)');
@@ -95,16 +92,32 @@ const App = ({ removeEventHandlers }) => {
   const [
     isInDesktopOnlyMode,
     isMultiViewerMode,
-    customFlxPanels,
+    genericPanels,
     customModals,
     notesInLeftPanel,
+    isOfficeEditorMode,
+    featureFlags,
+    isAccessibileMode,
   ] = useSelector((state) => [
     selectors.isInDesktopOnlyMode(state),
     selectors.isMultiViewerMode(state),
-    selectors.getCustomFlxPanels(state),
+    selectors.getGenericPanels(state),
     selectors.getCustomModals(state),
     selectors.getNotesInLeftPanel(state),
-  ]);
+    selectors.getIsOfficeEditorMode(state),
+    selectors.getFeatureFlags(state),
+    selectors.isAccessibleMode(state),
+  ], shallowEqual);
+
+  const { customizableUI } = featureFlags;
+  // These hooks control behaviours regarding the opening and closing of panels and in the case
+  // of the redaction hook it creates a reference that tracks the redaction annotations
+  useOnAnnotationCreateRubberStampToolMode();
+  useOnAnnotationCreateSignatureToolMode();
+  if (isAccessibileMode) {
+    useTabFocus();
+  }
+  const { redactionAnnotationsList } = useOnRedactionAnnotationChanged();
 
   useEffect(() => {
     const isOfficeEditingEnabled = getHashParameters('enableOfficeEditing', false);
@@ -114,6 +127,32 @@ const App = ({ removeEventHandlers }) => {
       }));
     }
   }, []);
+
+  useEffect(() => {
+    loadDefaultFonts();
+    const isCustomizableUIEnabled = getHashParameters('ui', 'default') === 'beta';
+    const isOfficeEditingEnabled = getHashParameters('enableOfficeEditing', false);
+    if (isCustomizableUIEnabled && !isOfficeEditingEnabled) {
+      dispatch(actions.setGenericPanels(defaultPanels));
+      // set panel widths for search and notes panel to 330px for the new UI
+      // we dont want to change this for the legacy panels at this time.
+      dispatch(actions.setPanelWidth(DataElements.SEARCH_PANEL, 330));
+      dispatch(actions.setPanelWidth(DataElements.NOTES_PANEL, 330));
+      dispatch(actions.enableFeatureFlag(FeatureFlags.CUSTOMIZABLE_UI));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (customizableUI) {
+      // These elements are disabled in the old UI and need to be enabled in the new UI
+      dispatch(actions.enableElements([
+        'layersPanel',
+        'layersPanelButton',
+        'bookmarksPanel',
+        'bookmarksPanelButton',
+      ], PRIORITY_ONE));
+    }
+  }, [customizableUI]);
 
   useEffect(() => {
     // To avoid race condition with window.dispatchEvent firing before window.addEventListener
@@ -271,27 +310,41 @@ const App = ({ removeEventHandlers }) => {
   const renderPanel = (panelName, dataElement) => {
     switch (panelName) {
       case panelNames.OUTLINE:
-        return <GenericOutlinesPanel />;
+        return <LazyLoadWrapper Component={LazyLoadComponents.GenericOutlinesPanel} dataElement={dataElement} />;
       case panelNames.SIGNATURE:
-        return <SignaturePanel />;
+        return <LazyLoadWrapper Component={LazyLoadComponents.SignaturePanel} dataElement={dataElement} />;
       case panelNames.BOOKMARKS:
-        return <BookmarksPanel panelSelector={dataElement} />;
+        return <LazyLoadWrapper Component={LazyLoadComponents.BookmarksPanel} dataElement={dataElement} />;
       case panelNames.FILE_ATTACHMENT:
-        return <FileAttachmentPanel />;
+        return <LazyLoadWrapper Component={LazyLoadComponents.FileAttachmentPanel} dataElement={dataElement} />;
       case panelNames.THUMBNAIL:
-        return <ThumbnailsPanel panelSelector={dataElement} />;
+        return <LazyLoadWrapper Component={LazyLoadComponents.ThumbnailsPanel} dataElement={dataElement} />;
       case panelNames.LAYERS:
         return <LayersPanel />;
       case panelNames.TEXT_EDITING:
-        return <TextEditingWrapper><TextEditingPanel dataElement={dataElement} /></TextEditingWrapper>;
+        return <TextEditingPanel dataElement={dataElement} />;
       case panelNames.CHANGE_LIST:
         return <MultiViewerWrapper><ComparePanel dataElement={dataElement} /></MultiViewerWrapper>;
       case panelNames.STYLE:
-        return <StylePanel />;
+        return <LazyLoadWrapper Component={LazyLoadComponents.StylePanel} dataElement={dataElement} />;
+      case panelNames.REDACTION:
+        return <LazyLoadWrapper Component={LazyLoadComponents.RedactionPanel} dataElement={dataElement} redactionAnnotationsList={redactionAnnotationsList} />;
+      case panelNames.SEARCH:
+        return <LazyLoadWrapper Component={LazyLoadComponents.SearchPanel} dataElement={dataElement} />;
+      case panelNames.NOTES:
+        return <LazyLoadWrapper Component={LazyLoadComponents.NotesPanel} dataElement={dataElement} />;
+      case panelNames.TABS:
+        return <LazyLoadWrapper Component={LazyLoadComponents.TabPanel} dataElement={dataElement} />;
+      case panelNames.SIGNATURE_LIST:
+        return <LazyLoadWrapper Component={LazyLoadComponents.SignatureListPanel} dataElement={dataElement} />;
+      case panelNames.RUBBER_STAMP:
+        return <LazyLoadWrapper Component={LazyLoadComponents.RubberStampPanel} dataElement={dataElement} />;
+      case panelNames.PORTFOLIO:
+        return <LazyLoadWrapper Component={LazyLoadComponents.PortfolioPanel} dataElement={dataElement} />;
     }
   };
 
-  const panels = customFlxPanels.map((panel, index) => {
+  const panels = genericPanels.map((panel, index) => {
     return (
       panel.render && (
         <Panel key={index} dataElement={panel.dataElement} location={panel.location} isCustom={true}>
@@ -320,40 +373,46 @@ const App = ({ removeEventHandlers }) => {
       >
         <FlyoutContainer />
         <RibbonOverflowFlyout />
-        <GroupedToolsOverflowFlyout />
         <ViewControlsFlyout />
         <MainMenu />
         <Accessibility />
         <Header />
-        {isOfficeEditorMode() && (
+        {isOfficeEditorMode && (
           <LazyLoadWrapper
             Component={LazyLoadComponents.OfficeEditorToolsHeader}
             dataElement={DataElements.OFFICE_EDITOR_TOOLS_HEADER}
           />
         )}
+        {customizableUI && <TabsHeader/>}
         <TopHeader />
         <div className="content">
           <LeftHeader />
-          <LeftPanel />
+          {!customizableUI && <LazyLoadWrapper
+            Component={LazyLoadComponents.LeftPanel}
+            dataElement={DataElements.LEFT_PANEL}
+          />}
           {panels}
           {!isMultiViewerMode && <DocumentContainer />}
           {window?.ResizeObserver && <MultiViewer />}
           <RightHeader />
-          <RightPanel dataElement={DataElements.SEARCH_PANEL} onResize={(width) => dispatch(actions.setSearchPanelWidth(width))}>
+          {!customizableUI && <RightPanel dataElement={DataElements.SEARCH_PANEL} onResize={(width) => dispatch(actions.setSearchPanelWidth(width))}>
             <LazyLoadWrapper
               Component={LazyLoadComponents.SearchPanel}
               dataElement={DataElements.SEARCH_PANEL}
             />
-          </RightPanel>
-          <RightPanel dataElement="notesPanel" onResize={(width) => dispatch(actions.setNotesPanelWidth(width))}>
+          </RightPanel>}
+          {!customizableUI && <RightPanel dataElement="notesPanel" onResize={(width) => dispatch(actions.setNotesPanelWidth(width))}>
             {!notesInLeftPanel && <LazyLoadWrapper
               Component={LazyLoadComponents.NotesPanel}
               dataElement={DataElements.NOTES_PANEL}
             />}
-          </RightPanel>
-          <RightPanel dataElement="redactionPanel" onResize={(width) => dispatch(actions.setRedactionPanelWidth(width))}>
-            <RedactionPanel />
-          </RightPanel>
+          </RightPanel>}
+          {!customizableUI && <RightPanel dataElement="redactionPanel" onResize={(width) => dispatch(actions.setRedactionPanelWidth(width))}>
+            <LazyLoadWrapper
+              Component={LazyLoadComponents.RedactionPanel}
+              dataElement={DataElements.REDACTION_PANEL}
+              redactionAnnotationsList={redactionAnnotationsList} />
+          </RightPanel>}
           <RightPanel dataElement="watermarkPanel" onResize={(width) => dispatch(actions.setWatermarkPanelWidth(width))}>
             <WatermarkPanel />
           </RightPanel>
@@ -364,12 +423,12 @@ const App = ({ removeEventHandlers }) => {
             <Wv3dPropertiesPanel />
           </RightPanel>
           <MultiTabEmptyPage />
-          <RightPanel
+          {!customizableUI && <RightPanel
             dataElement="textEditingPanel"
             onResize={(width) => dispatch(actions.setTextEditingPanelWidth(width))}
           >
             <TextEditingPanel />
-          </RightPanel>
+          </RightPanel>}
           <MultiViewerWrapper>
             <RightPanel dataElement="comparePanel" onResize={(width) => dispatch(actions.setComparePanelWidth(width))}>
               <ComparePanel />
@@ -393,6 +452,11 @@ const App = ({ removeEventHandlers }) => {
           Component={LazyLoadComponents.AnnotationContentOverlay}
           dataElement={DataElements.ANNOTATION_CONTENT_OVERLAY}
           onOpenHook={useOnAnnotationContentOverlayOpen}
+        />
+        <LazyLoadWrapper
+          Component={LazyLoadComponents.LinkAnnotationPopup}
+          dataElement={DataElements.LINK_ANNOTATION_POPUP}
+          onOpenHook={useOnLinkAnnotationPopupOpen}
         />
         <LazyLoadWrapper
           Component={LazyLoadComponents.PageManipulationOverlay}
@@ -429,11 +493,13 @@ const App = ({ removeEventHandlers }) => {
           dataElement={DataElements.FORM_FIELD_EDIT_POPUP}
           onOpenHook={useOnFormFieldAnnotationAddedOrSelected}
         />
-        <LazyLoadWrapper
-          Component={LazyLoadComponents.RichTextPopup}
-          dataElement={DataElements.RICH_TEXT_POPUP}
-          onOpenHook={useOnFreeTextEdit}
-        />
+        {!customizableUI && (
+          <LazyLoadWrapper
+            Component={LazyLoadComponents.RichTextPopup}
+            dataElement={DataElements.RICH_TEXT_POPUP}
+            onOpenHook={useOnFreeTextEdit}
+          />
+        )}
         <LazyLoadWrapper
           Component={LazyLoadComponents.InlineCommentingPopup}
           dataElement={DataElements.INLINE_COMMENT_POPUP}
@@ -506,6 +572,7 @@ const App = ({ removeEventHandlers }) => {
         )}
         <LogoBar />
         <LazyLoadWrapper Component={LazyLoadComponents.CreatePortfolioModal} dataElement={DataElements.CREATE_PORTFOLIO_MODAL} />
+        <EmbeddedJSPopup />
       </div>
 
       <PrintHandler />

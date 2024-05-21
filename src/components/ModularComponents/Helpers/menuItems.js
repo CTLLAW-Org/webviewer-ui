@@ -10,6 +10,7 @@ export const menuItems = {
     icon: 'icon-operation-undo',
     label: 'action.undo',
     title: 'action.undo',
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.REDO]: {
     dataElement: 'redoButton',
@@ -17,6 +18,23 @@ export const menuItems = {
     icon: 'icon-operation-redo',
     label: 'action.redo',
     title: 'action.redo',
+    hidden: false,
+  },
+  [PRESET_BUTTON_TYPES.FORM_FIELD_EDIT]: {
+    dataElement: 'formFieldEditButton',
+    presetDataElement: DataElements.FORM_FIELD_EDIT_PRESET_BUTTON,
+    icon: 'ic-fill-and-sign',
+    label: 'action.formFieldEditMode',
+    title: 'action.formFieldEditMode',
+    hidden: false,
+  },
+  [PRESET_BUTTON_TYPES.CONTENT_EDIT]: {
+    dataElement: 'contentEditButton',
+    presetDataElement: DataElements.CONTENT_EDIT_PRESET_BUTTON,
+    icon: 'icon-content-edit',
+    label: 'action.contentEditMode',
+    title: 'action.contentEditMode',
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.NEW_DOCUMENT]: {
     dataElement: DataElements.NEW_DOCUMENT_BUTTON,
@@ -24,7 +42,8 @@ export const menuItems = {
     icon: 'icon-plus-sign',
     label: 'action.newDocument',
     title: 'action.newDocument',
-    isActive: false
+    isActive: false,
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.FILE_PICKER]: {
     dataElement: DataElements.FILE_PICKER_BUTTON,
@@ -32,6 +51,7 @@ export const menuItems = {
     icon: 'icon-header-file-picker-line',
     label: 'action.openFile',
     title: 'action.openFile',
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.DOWNLOAD]: {
     dataElement: DataElements.DOWNLOAD_BUTTON,
@@ -39,6 +59,7 @@ export const menuItems = {
     icon: 'icon-download',
     label: 'action.download',
     title: 'action.download',
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.SAVE_AS]: {
     dataElement: DataElements.SAVE_AS_BUTTON,
@@ -46,7 +67,8 @@ export const menuItems = {
     icon: 'icon-save',
     label: 'saveModal.saveAs',
     title: 'saveModal.saveAs',
-    isActive: false
+    isActive: false,
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.PRINT]: {
     dataElement: DataElements.PRINT_BUTTON,
@@ -54,7 +76,8 @@ export const menuItems = {
     icon: 'icon-header-print-line',
     label: 'action.print',
     title: 'action.print',
-    isActive: false
+    isActive: false,
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.CREATE_PORTFOLIO]: {
     dataElement: DataElements.CREATE_PORTFOLIO_BUTTON,
@@ -62,7 +85,8 @@ export const menuItems = {
     icon: 'icon-pdf-portfolio',
     label: 'portfolio.createPDFPortfolio',
     title: 'portfolio.createPDFPortfolio',
-    isActive: false
+    isActive: false,
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.SETTINGS]: {
     dataElement: DataElements.SETTINGS_BUTTON,
@@ -70,7 +94,8 @@ export const menuItems = {
     icon: 'icon-header-settings-line',
     label: 'option.settings.settings',
     title: 'option.settings.settings',
-    isActive: false
+    isActive: false,
+    hidden: false,
   },
   [PRESET_BUTTON_TYPES.FULLSCREEN]: {
     dataElement: DataElements.FULLSCREEN_BUTTON,
@@ -78,6 +103,7 @@ export const menuItems = {
     icon: 'icon-header-full-screen',
     label: 'action.enterFullscreen',
     title: 'action.enterFullscreen',
+    hidden: false,
   },
 };
 

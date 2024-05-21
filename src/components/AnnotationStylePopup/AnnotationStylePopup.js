@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSelector, useDispatch } from 'react-redux';
 import Measure from 'react-measure';
@@ -9,9 +9,11 @@ import core from 'core';
 import getClassName from 'helpers/getClassName';
 import setToolStyles from 'helpers/setToolStyles';
 import { isMobile } from 'helpers/device';
+import adjustFreeTextBoundingBox from 'helpers/adjustFreeTextBoundingBox';
 import actions from 'actions';
 import selectors from 'selectors';
 import DataElements from 'constants/dataElement';
+import handleFreeTextAutoSizeToggle from 'src/helpers/handleFreeTextAutoSizeToggle';
 
 import './AnnotationStylePopup.scss';
 
@@ -45,31 +47,25 @@ const AnnotationStylePopup = (props) => {
 
   const [
     isDisabled,
-    isToolDefaultStyleUpdateFromAnnotationPopupEnabled
+    isToolDefaultStyleUpdateFromAnnotationPopupEnabled,
+    activeDocumentViewerKey,
   ] = useSelector((state) => [
     selectors.isElementDisabled(state, DataElements.ANNOTATION_STYLE_POPUP),
-    selectors.isToolDefaultStyleUpdateFromAnnotationPopupEnabled(state)
+    selectors.isToolDefaultStyleUpdateFromAnnotationPopupEnabled(state),
+    selectors.getActiveDocumentViewerKey(state),
   ]);
 
   const dispatch = useDispatch();
   const [t] = useTranslation();
-
-  const adjustFreeTextBoundingBox = (annotation) => {
-    const { FreeTextAnnotation } = window.Core.Annotations;
-    if (annotation instanceof FreeTextAnnotation && annotation.getAutoSizeType() !== FreeTextAnnotation.AutoSizeTypes.NONE) {
-      const doc = core.getDocument();
-      const pageNumber = annotation['PageNumber'];
-      const pageInfo = doc.getPageInfo(pageNumber);
-      const pageMatrix = doc.getPageMatrix(pageNumber);
-      const pageRotation = doc.getPageRotation(pageNumber);
-      annotation.fitText(pageInfo, pageMatrix, pageRotation);
-    }
-  };
+  const [isAutoSizeFont, setAutoSizeFont] = useState(properties.isAutoSizeFont);
 
   const handleSliderChange = (property, value) => {
-    const annotationManager = core.getAnnotationManager();
+    const annotationManager = core.getAnnotationManager(activeDocumentViewerKey);
     annotations.forEach((annotation) => {
       annotation[property] = value;
+      if (property === 'StrokeThickness') {
+        adjustFreeTextBoundingBox(annotation);
+      }
       annotationManager.redrawAnnotation(annotation);
     });
   };
@@ -78,7 +74,7 @@ const AnnotationStylePopup = (props) => {
     annotations.forEach((annotation) => {
       core.setAnnotationStyles(annotation, {
         [property]: value,
-      });
+      }, activeDocumentViewerKey);
       if (isToolDefaultStyleUpdateFromAnnotationPopupEnabled) {
         setToolStyles(annotation.ToolName, property, value);
       }
@@ -92,7 +88,7 @@ const AnnotationStylePopup = (props) => {
     annotations.forEach((annotation) => {
       core.setAnnotationStyles(annotation, {
         [property]: value,
-      });
+      }, activeDocumentViewerKey);
 
       if (isToolDefaultStyleUpdateFromAnnotationPopupEnabled) {
         setToolStyles(annotation.ToolName, property, value);
@@ -102,7 +98,7 @@ const AnnotationStylePopup = (props) => {
 
   const handleRichTextStyleChange = (property, value) => {
     annotations.forEach((annotation) => {
-      core.updateAnnotationRichTextStyle(annotation, { [property]: value });
+      core.updateAnnotationRichTextStyle(annotation, { [property]: value }, activeDocumentViewerKey);
     });
   };
 
@@ -127,10 +123,10 @@ const AnnotationStylePopup = (props) => {
         setToolStyles(annotation.ToolName, lineStyle, value);
       }
 
-      core.getAnnotationManager().redrawAnnotation(annotation);
+      core.getAnnotationManager(activeDocumentViewerKey).redrawAnnotation(annotation);
     });
 
-    core.getAnnotationManager().trigger('annotationChanged', [annotations, 'modify', {}]);
+    core.getAnnotationManager(activeDocumentViewerKey).trigger('annotationChanged', [annotations, 'modify', {}]);
   };
 
   const handleClick = (e) => {
@@ -176,6 +172,8 @@ const AnnotationStylePopup = (props) => {
             colorMapKey={colorMapKey}
             style={style}
             isFreeText={isFreeText}
+            isFreeTextAutoSize={isAutoSizeFont}
+            onFreeTextSizeToggle={() => handleFreeTextAutoSizeToggle(annotations[0], setAutoSizeFont, isAutoSizeFont)}
             isEllipse={isEllipse}
             isMeasure={isMeasure}
             onStyleChange={handleStyleChange}

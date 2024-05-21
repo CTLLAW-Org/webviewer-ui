@@ -1,10 +1,16 @@
 import localStorageManager from 'helpers/localStorageManager';
 import { getInstanceID } from 'helpers/getRootNode';
+import { ITEM_TYPE } from 'constants/customizationVariables';
 
 export default (initialState) => (state = initialState, action) => {
   const { type, payload } = action;
 
   switch (type) {
+    case 'SET_SCALE_OVERLAY_POSITION':
+      return {
+        ...state,
+        scaleOverlayPosition: payload.position,
+      };
     case 'SET_DEFAULT_PRINT_MARGINS':
       return {
         ...state,
@@ -13,7 +19,12 @@ export default (initialState) => (state = initialState, action) => {
     case 'SET_COLORS':
       return {
         ...state,
-        colors: payload.colors,
+        colors: payload.tool || !payload.colors ? state.colors : [...payload.colors],
+        textColors: payload.textColors ? [...payload.textColors] : state.textColors,
+        toolColorOverrides: payload.tool ? {
+          ...state.toolColorOverrides,
+          [payload.tool]: [...payload.colors],
+        } : state.toolColorOverrides,
       };
     case 'SET_PANEL_WIDTH':
       return {
@@ -62,6 +73,25 @@ export default (initialState) => (state = initialState, action) => {
         ...state,
         flyoutToggleElement: payload.toggleElement,
       };
+    case 'SET_FLYOUT_ITEMS': {
+      const { dataElement, items } = payload;
+      const flyout = state.flyoutMap[dataElement];
+      // Handle the case where the flyout is not yet registered with the UI
+      if (!flyout) {
+        return state;
+      }
+      const updatedFlyout = {
+        ...flyout,
+        items,
+      };
+      return {
+        ...state,
+        flyoutMap: {
+          ...state.flyoutMap,
+          [dataElement]: updatedFlyout,
+        },
+      };
+    }
     case 'SET_INITIALS_OFFSET':
       return {
         ...state,
@@ -122,6 +152,11 @@ export default (initialState) => (state = initialState, action) => {
       return {
         ...state,
         isMultiViewerModeAvailable: payload.isMultiViewerModeAvailable,
+      };
+    case 'SET_IS_OFFICE_EDITOR_MODE':
+      return {
+        ...state,
+        isOfficeEditorMode: payload.isOfficeEditorMode,
       };
     case 'SET_COMPARE_PAGES_BUTTON_ENABLED':
       return {
@@ -217,10 +252,10 @@ export default (initialState) => (state = initialState, action) => {
           [payload.group]: payload.toolName,
         },
       };
-    case 'SET_CURRENT_GROUPED_ITEMS':
+    case 'SET_ACTIVE_GROUPED_ITEMS':
       return {
         ...state,
-        activeGroupedItems: payload.groupedItems
+        activeGroupedItems: payload.groupedItems,
       };
     case 'SET_FIXED_GROUPED_ITEMS':
       return {
@@ -236,6 +271,11 @@ export default (initialState) => (state = initialState, action) => {
       return {
         ...state,
         selectedStampIndex: payload.index,
+      };
+    case 'SET_LAST_SELECTED_STAMP_INDEX':
+      return {
+        ...state,
+        lastSelectedStampIndex: payload.index,
       };
     case 'SET_SELECTED_DISPLAYED_SIGNATURE_INDEX':
       return {
@@ -435,6 +475,21 @@ export default (initialState) => (state = initialState, action) => {
           [payload.toolbarGroup]: payload.toolGroup,
         },
       };
+    case 'SET_LAST_PICKED_TOOL_FOR_GROUPED_ITEMS':
+      return {
+        ...state,
+        lastPickedToolForGroupedItems: {
+          ...state.lastPickedToolForGroupedItems,
+          [payload.groupedItem]: payload.toolName,
+        }
+      };
+    case 'SET_LAST_PICKED_TOOL_AND_GROUP':
+      return {
+        ...state,
+        lastPickedToolAndGroup: payload,
+      };
+    case 'SET_ACTIVE_CUSTOM_RIBBON':
+      return { ...state, activeCustomRibbon: payload.customRibbon };
     case 'SET_OUTLINE_CONTROL_VISIBILITY':
       return { ...state, outlineControlVisibility: payload.outlineControlVisibility };
     case 'SET_AUTO_EXPAND_OUTLINES':
@@ -556,7 +611,17 @@ export default (initialState) => (state = initialState, action) => {
     case 'ADD_PANEL':
       return {
         ...state,
-        customFlxPanels: [...state.customFlxPanels, payload.newPanel],
+        genericPanels: [...state.genericPanels, payload.newPanel],
+      };
+    case 'SET_GENERIC_PANELS':
+      return {
+        ...state,
+        genericPanels: [...payload.genericPanels],
+      };
+    case 'SET_MOBILE_PANEL_SIZE':
+      return {
+        ...state,
+        mobilePanelSize: payload.panelSize,
       };
     case 'USE_EMBEDDED_PRINT':
       return { ...state, useEmbeddedPrint: payload.useEmbeddedPrint };
@@ -599,6 +664,8 @@ export default (initialState) => (state = initialState, action) => {
     case 'SET_COLOR_MAP':
       return { ...state, colorMap: payload.colorMap };
     case 'SET_WARNING_MESSAGE':
+      return { ...state, warning: payload };
+    case 'ENABLE_DELETE_TAB_WARNING':
       return { ...state, warning: payload };
     case 'DISABLE_DELETE_TAB_WARNING':
       return { ...state, warning: payload };
@@ -652,23 +719,144 @@ export default (initialState) => (state = initialState, action) => {
         customModals: [...existingDataElementFiltered, payload],
       };
     }
-    case 'ADD_MODULAR_HEADERS':
-      return { ...state, modularHeaders: state.modularHeaders.concat(payload) };
-    case 'SET_MODULAR_HEADERS':
-      return { ...state, modularHeaders: payload };
-    case 'UPDATE_MODULAR_HEADERS': {
+    case 'UPDATE_MODULAR_HEADER': {
       const { dataElement, property, value } = payload;
-      const updatedModularHeaders = state.modularHeaders.map((header) => {
-        if (header.dataElement === dataElement) {
-          return {
-            ...header,
+      const existingModularHeader = state.modularHeaders[dataElement];
+
+      // This is to prevent the case where the header is not yet initialized
+      if (!existingModularHeader) {
+        return state;
+      }
+
+      // Create a new updatedModularHeader object with the updated property value
+      const updatedModularHeader = {
+        ...existingModularHeader,
+        [property]: value
+      };
+
+      return {
+        ...state,
+        modularHeaders: {
+          ...state.modularHeaders,
+          [dataElement]: updatedModularHeader,
+        },
+      };
+    }
+    case 'SET_MODULAR_COMPONENTS_PROPERTY': {
+      const { groupedItemsDataElement, property, value } = payload;
+      const existingModularComponent = state.modularComponents[groupedItemsDataElement];
+      if (!existingModularComponent) {
+        return state;
+      }
+      const updatedModularComponent = {
+        ...existingModularComponent,
+        [property]: value,
+      };
+      return {
+        ...state,
+        modularComponents: {
+          ...state.modularComponents,
+          [groupedItemsDataElement]: updatedModularComponent,
+        },
+      };
+    }
+    case 'SET_ALL_GROUPED_ITEMS_PROPERTY': {
+      const { property, value } = payload;
+      // Clone the existing modularComponents to avoid direct mutation
+      const newModularComponents = { ...state.modularComponents };
+
+      // Iterate over modularComponents and update grouped items directly
+      Object.keys(newModularComponents).forEach((key) => {
+        if (newModularComponents[key].type === ITEM_TYPE.GROUPED_ITEMS) {
+          newModularComponents[key] = {
+            ...newModularComponents[key],
             [property]: value,
           };
         }
-        return header;
       });
-      return { ...state, modularHeaders: updatedModularHeaders };
+      return {
+        ...state,
+        modularComponents: newModularComponents,
+      };
     }
+    case 'ADD_MODULAR_HEADERS_AND_COMPONENTS': {
+      const { headersMap, componentsMap } = payload;
+      return {
+        ...state,
+        modularHeaders: { ...state.modularHeaders, ...headersMap },
+        modularComponents: { ...state.modularComponents, ...componentsMap }
+      };
+    }
+    case 'SET_MODULAR_HEADERS_AND_COMPONENTS': {
+      const { headersMap, componentsMap } = payload;
+      return {
+        ...state,
+        modularHeaders: { ...headersMap },
+        modularComponents: { ...componentsMap }
+      };
+    }
+    case 'SET_MODULAR_HEADER_ITEMS': {
+      const { headerDataElement, normalizedItems, itemsDataElements } = payload;
+      const existingModularHeader = state.modularHeaders[headerDataElement];
+
+      // This is to prevent the case where the header is not yet initialized
+      if (!existingModularHeader) {
+        return state;
+      }
+
+      // Remove existing items and replace with new one
+      if (itemsDataElements) {
+        itemsDataElements.forEach((key) => {
+          delete state.modularComponents[key];
+        });
+      }
+
+      const updatedModularHeader = {
+        ...existingModularHeader,
+        items: [...itemsDataElements]
+      };
+
+      return {
+        ...state,
+        modularHeaders: {
+          ...state.modularHeaders,
+          [headerDataElement]: updatedModularHeader,
+        },
+        modularComponents: {
+          ...state.modularComponents,
+          ...normalizedItems,
+        },
+      };
+    }
+    case 'UPDATE_GROUPED_ITEMS': {
+      const { groupedItemsDataElement, normalizedItems, componentsMap } = payload;
+      const existingGroupedItem = state.modularComponents[groupedItemsDataElement];
+      // This is to prevent the case where the header is not yet initialized
+      if (!existingGroupedItem) {
+        return state;
+      }
+      // How do we handle "dangling" components? i.e. components that are no longer referenced anywhere
+      const updatedGroupedItem = {
+        ...existingGroupedItem,
+        items: normalizedItems,
+      };
+      return {
+        ...state,
+        modularComponents: {
+          ...state.modularComponents,
+          [groupedItemsDataElement]: updatedGroupedItem,
+          ...componentsMap,
+        },
+      };
+    }
+    case 'SET_ACTIVE_CUSTOM_PANEL':
+      return {
+        ...state,
+        activeCustomPanel: {
+          ...state.activeCustomPanel,
+          [payload.wrapperPanel]: payload.tabPanel
+        },
+      };
     case 'SET_RIGHT_HEADER_WIDTH':
       return {
         ...state,
@@ -753,6 +941,8 @@ export default (initialState) => (state = initialState, action) => {
         console.error('localStorage is disabled, hideContentEditWarning cannot be restored');
       }
       return { ...state, hideContentEditWarning: payload.hideWarning };
+    case 'SET_CONTENT_EDIT_WORKERS_LOADED':
+      return { ...state, contentEditWorkersLoaded: payload.contentEditWorkersLoaded };
     case 'SET_CURRENT_CONTENT_BEING_EDITED':
       return {
         ...state,
@@ -843,6 +1033,11 @@ export default (initialState) => (state = initialState, action) => {
       return { ...state, shouldResetAudioPlaybackPosition: payload.shouldResetAudioPlaybackPosition };
     case 'SET_ACTIVE_SOUND_ANNOTATION':
       return { ...state, activeSoundAnnotation: payload.activeSoundAnnotation };
+    case 'SET_EMBEDDED_JS_POPUP_MENU_STYLE':
+      return {
+        ...state,
+        embeddedJSPopupStyle: payload.embeddedJSPopupStyle,
+      };
     case 'SET_ANNOTATION_FILTERS':
       return { ...state, annotationFilters: payload.annotationFilters };
     case 'SET_ZOOM_STEP_FACTORS':
@@ -894,6 +1089,11 @@ export default (initialState) => (state = initialState, action) => {
       return { ...state, enableRightClickAnnotationPopup: payload.isEnabled };
     case 'SET_TOOL_DEFAULT_STYLE_UPDATE_FROM_ANNOTATION_POPUP_ENABLED':
       return { ...state, toolDefaultStyleUpdateFromAnnotationPopupEnabled: payload };
+    case 'SET_ANNOTATION_TOOL_STYLE_SYNCING_ENABLED':
+      return {
+        ...state,
+        annotationToolStyleSyncingEnabled: payload,
+      };
     case 'SET_SHORTCUT_KEY_MAP':
       return { ...state, shortcutKeyMap: payload };
     case 'SET_MULTI_VIEWER_SYNC_SCROLLING_MODE':

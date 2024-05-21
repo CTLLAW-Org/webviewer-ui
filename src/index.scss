@@ -94,3 +94,10 @@ html[data-theme='dark'] {
   // Choice checked
   --color-blue-gray-5: var(--primary-button);
 }
+
+/* Overriding style for Storybook when in mobile mode. */
+@media (max-width: 640px) {
+  .sb-main-padded.sb-show-main {
+    padding: 0;
+  }
+}

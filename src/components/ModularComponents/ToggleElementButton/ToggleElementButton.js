@@ -9,16 +9,28 @@ import Button from 'components/Button';
 const ToggleElementButton = (props) => {
   const buttonRef = useRef();
   const { dataElement, title, disabled, img, label, toggleElement, setFlyoutTriggerRef = null } = props;
-  const [isActive, flyoutMap] = useSelector((state) => [
+  const [
+    isActive,
+    flyoutMap,
+    isToggleElementDisabled,
+    isButtonDisabled,
+  ] = useSelector((state) => [
     selectors.isElementOpen(state, toggleElement),
     selectors.getFlyoutMap(state),
+    selectors.isElementDisabled(state, toggleElement),
+    selectors.isElementDisabled(state, dataElement),
   ]);
 
   const [isElementActive, setIsElementActive] = useState(isActive);
+  const [isElementDisabled, setIsElementDisabled] = useState(disabled);
 
   useEffect(() => {
     setIsElementActive(isActive);
   }, [isActive]);
+
+  useEffect(() => {
+    setIsElementDisabled(isToggleElementDisabled);
+  }, [isToggleElementDisabled]);
 
   const dispatch = useDispatch();
 
@@ -33,6 +45,10 @@ const ToggleElementButton = (props) => {
     dispatch(actions.toggleElement(toggleElement));
   };
 
+  if (isButtonDisabled) {
+    return null;
+  }
+
   return (
     <div className="ToggleElementButton" data-element={dataElement} ref={buttonRef}>
       <Button
@@ -42,7 +58,7 @@ const ToggleElementButton = (props) => {
         label={label}
         title={title}
         onClick={onClick}
-        disabled={disabled}
+        disabled={isElementDisabled}
       >
         {props.children}
       </Button>

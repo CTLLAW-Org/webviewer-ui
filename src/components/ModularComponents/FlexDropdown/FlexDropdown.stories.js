@@ -4,6 +4,7 @@ import FlexDropdown from './FlexDropdown';
 import { Provider } from 'react-redux';
 import core from 'core';
 import initialState from 'src/redux/initialState';
+import Icon from 'components/Icon';
 
 export default {
   title: 'ModularComponents/FlexDropdown',
@@ -116,19 +117,32 @@ const FlexDropdownWrapper = ({ isBottomAligned, arrowDirection, direction, heigh
     }
   }, []);
 
+  const renderDropdownItem = (item, getTranslatedDisplayValue) => (
+    <div className={'Dropdown__item-object'}>
+      {item.img &&
+        <Icon glyph={item.img} className={item.className} />
+      }
+      {(getTranslatedDisplayValue(item.label)) &&
+        <span className={'Dropdown__item-text'}>{getTranslatedDisplayValue(item.label)}</span>
+      }
+    </div>
+  );
+
   return (
     <Provider store={store}>
       <div style={{ display: 'flex', height: isBottomAligned ? 726 : undefined, alignItems: 'center', justifyContent: 'space-evenly' }}>
         <FlexDropdown
           dataElement={'basicFlexDropdown'}
-          objects={items}
-          objectKey={'toolbarGroup'}
+          items={items}
+          getKey={(item) => item['toolbarGroup']}
           currentSelectionKey={currentSelectionKey}
           onClickItem={onClickItem}
           arrowDirection={arrowDirection}
           direction={direction}
           height={height}
           width={width}
+          renderItem={renderDropdownItem}
+          renderSelectedItem={renderDropdownItem}
         />
       </div>
     </Provider>

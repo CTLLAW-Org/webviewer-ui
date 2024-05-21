@@ -25,7 +25,10 @@ const initialState = {
   },
   document: {
     printQuality: 1,
-  }
+  },
+  featureFlags: {
+    customizableUI: false,
+  },
 };
 
 function rootReducer(state = initialState) {

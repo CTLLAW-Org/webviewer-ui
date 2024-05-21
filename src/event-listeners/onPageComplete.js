@@ -18,7 +18,8 @@ export default (store, documentViewerKey) => (pageNumber) => {
       if (existingTextContainer) {
         pageContainerElement.removeChild(existingTextContainer);
       }
-      pageContainerElement.appendChild(textContainer);
+      // add pageText to the beginning of the pageContainer so that it comes first in tab order
+      pageContainerElement.prepend(textContainer);
     });
   }
 };

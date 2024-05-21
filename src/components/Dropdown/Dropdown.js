@@ -12,12 +12,16 @@ import './Dropdown.scss';
 
 const DEFAULT_WIDTH = 100;
 const DEFAULT_HEIGHT = 28;
+const directionMap = {
+  'up': 'down',
+  'down': 'up',
+  'left': 'right',
+  'right': 'left',
+};
 
 const propTypes = {
   items: PropTypes.array,
   images: PropTypes.array,
-  objects: PropTypes.array,
-  objectKey: PropTypes.string,
   width: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.number
@@ -42,20 +46,21 @@ const propTypes = {
   className: PropTypes.string,
   onOpened: PropTypes.func,
   arrowDirection: PropTypes.string,
+  disableFocusing: PropTypes.bool,
+  renderItem: PropTypes.func,
+  renderSelectedItem: PropTypes.func,
 };
 
 function Dropdown({
   items = [],
   images = [],
-  objects = [],
-  objectKey,
   width = width || DEFAULT_WIDTH,
   height,
   columns = 1,
   currentSelectionKey,
   translationPrefix,
   getTranslationLabel,
-  onClickItem,
+  onClickItem = () => {},
   dataElement,
   disabled = false,
   applyCustomStyleToButton = true,
@@ -70,7 +75,11 @@ function Dropdown({
   customDataValidator = () => true,
   isSearchEnabled = true,
   onOpened = () => {},
-  arrowDirection,
+  arrowDirection = 'down',
+  children,
+  disableFocusing = false,
+  renderItem = (item, getTranslatedDisplayValue) => (<>{getTranslatedDisplayValue(item)}</>),
+  renderSelectedItem = (item, getTranslatedDisplayValue) => (<>{getTranslatedDisplayValue(item)}</>),
 }) {
   const { t, ready: tReady } = useTranslation();
   const overlayRef = useRef(null);
@@ -78,6 +87,12 @@ function Dropdown({
   const inputRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [inputVal, setInputVal] = useState('');
+
+  const hasImages = images && images.length > 0;
+  if (hasImages) {
+    getKey = (item) => item.key;
+  }
+
   const onClose = useCallback(() => setIsOpen(false), []);
   const onToggle = useCallback((e) => {
     if (hasInput && e.target === inputRef?.current) {
@@ -183,7 +198,10 @@ function Dropdown({
       e.stopPropagation();
       onClickItem(key, i);
       setIsOpen(false);
-      buttonRef.current.focus();
+      if (!disableFocusing) {
+        buttonRef.current.focus();
+      }
+
 
       if (inputRef?.current) {
         inputRef.current.value = displayValue;
@@ -200,6 +218,8 @@ function Dropdown({
     return t(`${prefix}.${key}`, key);
   };
 
+  const getTranslatedDisplayValue = (item) => ((tReady && item) ? getTranslation(translationPrefix, getDisplayValue(item)) : '');
+
   const getDropdownStyles = (item, maxheight) => {
     const dropdownItemStyles = getCustomItemStyle(item);
     if (maxheight) {
@@ -208,43 +228,21 @@ function Dropdown({
     return dropdownItemStyles;
   };
 
-  const renderDropdownImages = () => images.map((image) => (
-    <DataElementWrapper
-      key={image.key}
-      type="button"
-      dataElement={`dropdown-item-${image.key}`}
-      className={classNames('Dropdown__item', { active: image.key === currentSelectionKey })}
-      tabIndex={isOpen ? undefined : -1} // Just to be safe.
-      onClick={(e) => onClickDropdownItem(e, image.key)}
-    >
-      <Icon glyph={image.src} className={image.className} />
-    </DataElementWrapper>
-  ));
-
-  const renderDropdownObjects = () => objects.map((object, index) => {
-    const translatedDisplayValue = getTranslatedDisplayValue(object.label || '');
+  const renderDropdownImages = () => images.map((image) => {
+    const key = getKey(image);
     return (
       <DataElementWrapper
-        key={object.dataElement}
+        key={key}
         type="button"
-        dataElement={`dropdown-item-${index}`}
-        className={classNames('Dropdown__item', { active: object.index === currentSelectionKey })}
+        dataElement={`dropdown-item-${key}`}
+        className={classNames('Dropdown__item', { active: key === currentSelectionKey })}
         tabIndex={isOpen ? undefined : -1} // Just to be safe.
-        onClick={(e) => onClickDropdownItem(e, object[objectKey])}
+        onClick={(e) => onClickDropdownItem(e, key)}
       >
-        <div className={'Dropdown__item-object'}>
-          {object.img &&
-            <Icon glyph={object.img} className={object.className} />
-          }
-          {(translatedDisplayValue) &&
-            <span className={'Dropdown__item-text'}>{translatedDisplayValue}</span>
-          }
-        </div>
+        <Icon glyph={image.src} className={image.className} />
       </DataElementWrapper>
     );
   });
-
-  const getTranslatedDisplayValue = (item) => getTranslation(translationPrefix, getDisplayValue(item));
 
   const renderDropdownItems = () => items
     .filter((item) => !isSearchEnabled || getTranslatedDisplayValue(item).toLowerCase().includes(inputVal.toLowerCase()))
@@ -262,7 +260,7 @@ function Dropdown({
           tabIndex={isOpen ? undefined : -1} // Just to be safe.
           style={getDropdownStyles(item, maxHeight)}
         >
-          {translatedDisplayValue}
+          {renderItem(item, getTranslatedDisplayValue)}
         </DataElementWrapper>
       );
     });
@@ -272,53 +270,20 @@ function Dropdown({
   let selectedItem;
   let selectedItemDisplay;
 
-  const hasImages = images && images.length > 0;
-  const hasObjects = objects && objects.length > 0;
-  if (hasImages) {
-    const imageKeys = images.map((item) => item.key);
-    const selectedImageIndex = getImageIndexFromKey(images, currentSelectionKey);
-    optionIsSelected = imageKeys.some((key) => key === currentSelectionKey);
+  selectedItem = (hasImages ? images : items).find((item) => getKey(item) === currentSelectionKey);
+  optionIsSelected = !!selectedItem;
 
-    let glyph = '';
-    let className = '';
-    if (selectedImageIndex > -1) {
-      glyph = images[selectedImageIndex].src;
-      className = images[selectedImageIndex].className;
-    }
+  if (hasImages) {
+    const glyph = selectedItem?.src || '';
+    const className = selectedItem?.className || '';
 
     selectedItemDisplay = (
       <Icon glyph={glyph} className={className} />
     );
     dropdownItems = useMemo(renderDropdownImages, [images, currentSelectionKey]);
-  } else if (hasObjects) {
-    const objectKeys = objects.map((item) => item[objectKey]);
-    const selectedObjectIndex = objectKeys.indexOf(currentSelectionKey);
-    optionIsSelected = objects.some((object) => object[objectKey] === currentSelectionKey);
-
-    let glyph = '';
-    let text = '';
-    let className = '';
-    if (selectedObjectIndex > -1) {
-      glyph = objects[selectedObjectIndex].img;
-      text = objects[selectedObjectIndex].label;
-      className = objects[selectedObjectIndex].className;
-    }
-    selectedItemDisplay = (
-      <div className={'Dropdown__item-object'}>
-        {glyph &&
-          <Icon glyph={glyph} className={className} />
-        }
-        {text &&
-          <span className={'Dropdown__item-text'}>{text}</span>
-        }
-      </div>
-    );
-    dropdownItems = useMemo(renderDropdownObjects, [objects, currentSelectionKey]);
-  } else {
-    optionIsSelected = items.some((item) => getKey(item) === currentSelectionKey);
+  } else if (!children) {
     if (optionIsSelected) {
-      selectedItem = items.find((item) => getKey(item) === currentSelectionKey);
-      selectedItemDisplay = tReady ? getTranslation(translationPrefix, getDisplayValue(selectedItem)) : '';
+      selectedItemDisplay = renderSelectedItem(selectedItem, getTranslatedDisplayValue);
     } else if (hasInput && currentSelectionKey) {
       optionIsSelected = !!currentSelectionKey;
       selectedItemDisplay = currentSelectionKey;
@@ -413,19 +378,8 @@ function Dropdown({
     customDataValidator
   ]);
 
-  const directionMap = {
-    'up': 'down',
-    'down': 'up',
-    'left': 'right',
-    'right': 'left',
-  };
-
-  if (!arrowDirection) {
-    arrowDirection = 'down';
-  }
-
   return (
-    <DataElementWrapper className={`Dropdown__wrapper ${className}`} dataElement={dataElement}>
+    <DataElementWrapper className={`Dropdown__wrapper ${className} ${isOpen ? 'open' : ''}`} dataElement={dataElement}>
       {!displayButton &&
         <button
           className={classNames({
@@ -450,7 +404,7 @@ function Dropdown({
         </button>
       }
       {displayButton &&
-        <div ref={buttonRef} onClick={onToggle}>
+        <div ref={buttonRef} onClick={onToggle} className='display-button'>
           {displayButton(isOpen)}
         </div>
       }
@@ -462,14 +416,15 @@ function Dropdown({
         style={maxHeight ? scrollItemsStyle : undefined}
         onKeyDown={onOverlayKeyDown}
       >
-        {dropdownItems.length > 0 ?
-          (columns > 1 ?
-            displayDropdownAsList(dropdownItems, columns)
-            : dropdownItems
-          ) :
-          <>
-            <button data-testid="sig-no-result" className="Dropdown__item">{t('message.noResults')}</button>
-          </>
+        {children ? React.cloneElement(children, { onClose }) :
+          dropdownItems.length > 0 ?
+            (columns > 1 ?
+              displayDropdownAsList(dropdownItems, columns) :
+              dropdownItems
+            ) :
+            <>
+              <button data-testid="sig-no-result" className="Dropdown__item">{t('message.noResults')}</button>
+            </>
         }
       </div>
     </DataElementWrapper>
@@ -508,21 +463,6 @@ const displayDropdownAsList = (items, columns) => {
       </tbody>
     </table>
   );
-};
-
-const getImageIndexFromKey = (imageArray, key) => {
-  if (!imageArray || imageArray.length === 0) {
-    return -1;
-  }
-
-  let imageIndex = -1;
-  imageArray.forEach((image, index) => {
-    if (image.key === key) {
-      imageIndex = index;
-    }
-  });
-
-  return imageIndex;
 };
 
 Dropdown.propTypes = propTypes;

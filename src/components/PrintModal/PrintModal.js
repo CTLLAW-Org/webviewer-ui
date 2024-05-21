@@ -12,7 +12,6 @@ import ModalWrapper from 'components/ModalWrapper';
 import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import DataElements from 'constants/dataElement';
-import getRootNode from 'helpers/getRootNode';
 
 import './PrintModal.scss';
 import DataElementWrapper from '../DataElementWrapper';
@@ -80,28 +79,6 @@ const PrintModal = () => {
     }
   }, [defaultPrintOptions]);
 
-  useEffect(() => {
-    const adjustHeightIfSinglePage = () => {
-      const print = getRootNode().getElementById('print-handler');
-
-      if (!print) {
-        return;
-      }
-
-      if (print.children.length === 1) {
-        print.parentElement.setAttribute('style', 'height: 99%;');
-      } else {
-        print.parentElement.setAttribute('style', 'height: 100%;');
-      }
-    };
-
-    window.addEventListener('beforeprint', adjustHeightIfSinglePage);
-
-    return () => {
-      window.removeEventListener('beforeprint', adjustHeightIfSinglePage);
-    };
-  }, []);
-
   const isPrinting = count >= 0;
   const className = getClassName('Modal PrintModal', { isOpen });
   const customPagesLabelElement = (
@@ -145,11 +122,11 @@ const PrintModal = () => {
   const onChange = () => {
     let pagesToPrint = [];
 
-    if (allPages.current.checked) {
+    if (allPages.current?.checked) {
       for (let i = 1; i <= core.getTotalPages(); i++) {
         pagesToPrint.push(i);
       }
-    } else if (currentPageRef.current.checked) {
+    } else if (currentPageRef.current?.checked) {
       const pageCount = core.getTotalPages();
 
       // when displaying 2 pages, "Current" should print both of them
@@ -185,10 +162,10 @@ const PrintModal = () => {
           pagesToPrint.push(currentPage);
           break;
       }
-    } else if (customPages.current.checked) {
+    } else if (customPages.current?.checked) {
       const customInput = customInputRef.current.value.replace(/\s+/g, '');
       pagesToPrint = getPageArrayFromString(customInput, pageLabels);
-    } else if (currentView.current.checked) {
+    } else if (currentView.current?.checked) {
       pagesToPrint = [currentPage];
     }
 
@@ -258,6 +235,7 @@ const PrintModal = () => {
         pageIndexToView={currentPage - 1}
         modalClosed={setWatermarkModalVisibility}
         formSubmitted={(value) => dispatch(actions.setWatermarkModalOptions(value))}
+        watermarkLocations={watermarkModalOptions}
       />
       <div
         className={className}

@@ -3,6 +3,20 @@ import Item from './item';
 
 const { checkTypes, TYPES } = window.Core;
 
+/**
+ * Creates a new instance of PresetButton.
+ * @name PresetButton
+ * @memberOf UI.Components
+ * @class UI.Components.PresetButton
+ * @extends UI.Components.Item
+ * @property {ItemProperties} properties An object that contains the properties of the PresetButton.
+ * @property {string} properties.buttonType The type of the button. Refer to: {@link UI.PRESET_BUTTON_TYPES}
+ * @example
+const presetButton = new instance.UI.Components.PresetButton({
+  buttonType: 'saveAsButton',
+  dataElement: 'presetButton-save'
+});
+ */
 class PresetButton extends Item {
   constructor(props = {}) {
     checkTypes([props], [TYPES.OBJECT({
@@ -12,7 +26,7 @@ class PresetButton extends Item {
     super(props);
     this.type = ITEM_TYPE.PRESET_BUTTON;
     this.buttonType = props.buttonType;
-    this.dataElement = props.dataElement || this.buttonType;
+    this._dataElement = props.dataElement || this.buttonType;
   }
 }
 

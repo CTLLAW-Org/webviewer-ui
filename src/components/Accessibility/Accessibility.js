@@ -8,21 +8,28 @@ import getRootNode from 'helpers/getRootNode';
 
 function Accessibility() {
   const dispatch = useDispatch();
+  const [
+    pageNumber,
+    isAccessibleMode,
+    isNotesPanelOpen,
+    isNotesPanelDisabled,
+    isSearchPanelOpen,
+    isSearchPanelDisabled,
+  ] = useSelector((state) => [
+    selectors.getCurrentPage(state),
+    selectors.isAccessibleMode(state),
+    selectors.isElementOpen(state, 'notesPanel'),
+    selectors.isElementDisabled(state, 'notesPanel'),
+    selectors.isElementOpen(state, 'searchPanel'),
+    selectors.isElementDisabled(state, 'searchPanel'),
+  ]);
   const [isVisible, setIsVisible] = useState(false);
-
-  const isAccessibleMode = useSelector(selectors.isAccessibleMode);
-
-  const isNotesPanelOpen = useSelector((state) => selectors.isElementOpen(state, 'notesPanel'));
-  const isNotesPanelDisabled = useSelector((state) => selectors.isElementDisabled(state, 'notesPanel'));
-
-  const isSearchPanelOpen = useSelector((state) => selectors.isElementOpen(state, 'searchPanel'));
-  const isSearchPanelDisabled = useSelector((state) => selectors.isElementDisabled(state, 'searchPanel'));
 
   const onFocus = () => setIsVisible(true);
   const onBlur = () => setIsVisible(false);
 
   const onSkipToDocument = () => {
-    getRootNode().querySelector('#pageText1').focus();
+    getRootNode().querySelector(`#pageText${pageNumber}`).focus();
   };
 
   const onSkipToSearch = () => {

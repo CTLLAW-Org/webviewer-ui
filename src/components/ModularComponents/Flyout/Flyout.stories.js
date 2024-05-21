@@ -2,6 +2,9 @@ import React from 'react';
 import { configureStore } from '@reduxjs/toolkit';
 import Flyout from './Flyout';
 import { Provider } from 'react-redux';
+import DataElements from 'constants/dataElement';
+import { menuItems } from 'components/ModularComponents/Helpers/menuItems';
+import { PRESET_BUTTON_TYPES, ITEM_TYPE } from 'constants/customizationVariables';
 
 export default {
   title: 'ModularComponents/Flyout',
@@ -10,11 +13,29 @@ export default {
 
 const initialState = {
   viewer: {
+    lastPickedToolForGroupedItems: {
+      undefined: '',
+    },
+    toolButtonObjects: {
+      AnnotationEdit: {
+        'dataElement': 'selectToolButton',
+        'title': 'tool.select',
+        'img': 'multi select',
+        'showColor': 'never'
+      },
+      Pan: {
+        'dataElement': 'panToolButton',
+        'title': 'tool.pan',
+        'img': 'icon-header-pan',
+        'showColor': 'never'
+      },
+    },
+    colorMap: {},
     disabledElements: {},
     customElementOverrides: {},
     openElements: {},
     customPanels: [],
-    customFlxPanels: [],
+    genericPanels: [],
     flyoutMap: {
       'flyoutMenu': {
         'dataElement': 'flyoutMenu',
@@ -282,15 +303,78 @@ const initialState = {
             'label': 'Item 5',
           }
         ],
+      },
+      [DataElements.MAIN_MENU]: {
+        dataElement: DataElements.MAIN_MENU,
+        items: [
+          {
+            ...menuItems[PRESET_BUTTON_TYPES.NEW_DOCUMENT],
+            type: ITEM_TYPE.PRESET_BUTTON,
+          },
+          {
+            ...menuItems[PRESET_BUTTON_TYPES.FILE_PICKER],
+            type: ITEM_TYPE.PRESET_BUTTON,
+          },
+          {
+            ...menuItems[PRESET_BUTTON_TYPES.DOWNLOAD],
+            type: ITEM_TYPE.PRESET_BUTTON,
+          },
+          {
+            ...menuItems[PRESET_BUTTON_TYPES.FULLSCREEN],
+            type: ITEM_TYPE.PRESET_BUTTON,
+          },
+          {
+            ...menuItems[PRESET_BUTTON_TYPES.SAVE_AS],
+            type: ITEM_TYPE.PRESET_BUTTON,
+          },
+          {
+            ...menuItems[PRESET_BUTTON_TYPES.PRINT],
+            type: ITEM_TYPE.PRESET_BUTTON,
+          },
+          'divider',
+          {
+            ...menuItems[PRESET_BUTTON_TYPES.CREATE_PORTFOLIO],
+            type: ITEM_TYPE.PRESET_BUTTON,
+          },
+          'divider',
+          {
+            ...menuItems[PRESET_BUTTON_TYPES.SETTINGS],
+            type: ITEM_TYPE.PRESET_BUTTON,
+          },
+          'divider',
+        ],
+      },
+      'menuWithComponentItems': {
+        dataElement: 'menuWithComponentItems',
+        items: [
+          { dataElement: 'panToolButton', toolName: 'Pan', className: 'FlyoutToolButton' },
+          { dataElement: 'annotationEditToolButton', toolName: 'AnnotationEdit', className: 'FlyoutToolButton' },
+        ],
       }
+    },
+    modularComponents: {
+      panToolButton: {
+        dataElement: 'panToolButton',
+        type: 'toolButton',
+        toolName: 'Pan',
+        img: 'icon-save',
+      },
+      annotationEditToolButton: {
+        dataElement: 'annotationEditToolButton',
+        type: 'toolButton',
+        toolName: 'AnnotationEdit',
+        img: 'icon-save',
+      },
     },
     flyoutPosition: { x: 0, y: 0 },
     activeFlyout: 'flyoutMenu',
-    modularHeaders: [],
+    activeCustomPanel: '',
+    modularHeaders: {},
     modularHeadersHeight: {
       topHeaders: 40,
       bottomHeaders: 40
     },
+    customHeadersAdditionalProperties: {},
   },
 };
 const store = configureStore({
@@ -314,6 +398,37 @@ const store2 = configureStore({
 
 export const FlyoutWithoutIcons = () => (
   <Provider store={store2}>
+    <Flyout />
+  </Provider>
+);
+
+const store3 = configureStore({
+  reducer: () => {
+    return {
+      ...initialState,
+      viewer: { ...initialState.viewer, activeFlyout: DataElements.MAIN_MENU }
+    };
+  }
+});
+
+export const MainMenuFlyout = () => (
+  <Provider store={store3}>
+    <Flyout/>
+  </Provider>
+);
+
+const store4 = configureStore({
+  reducer: () => {
+    return {
+      ...initialState,
+      viewer: { ...initialState.viewer, activeFlyout: 'menuWithComponentItems' }
+    };
+  }
+});
+
+// Should show save icons instead in the flyout since the modular component has been 'updated' with that icon
+export const FlyoutWithComponentItems = () => (
+  <Provider store={store4}>
     <Flyout />
   </Provider>
 );

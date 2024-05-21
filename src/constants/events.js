@@ -7,7 +7,7 @@
  * @property {string} FILE_DOWNLOADED {@link UI#event:fileDownloaded UI.Events.fileDownloaded}
  * @property {string} LOAD_ERROR {@link UI#event:loaderror UI.Events.loaderror}
  * @property {string} DRAG_OUTLINE {@link UI#event:dragOutline UI.Events.dragOutline}
- * @property {string} DROP_OUTLINE {@link UI#event:dragOutline UI.Events.dragOutline}
+ * @property {string} DROP_OUTLINE {@link UI#event:dropOutline UI.Events.dropOutline}
  * @property {string} PANEL_RESIZED {@link UI#event:panelResized UI.Events.panelResized}
  * @property {string} THEME_CHANGED {@link UI#event:themeChanged UI.Events.themeChanged}
  * @property {string} TOOLBAR_GROUP_CHANGED {@link UI#event:toolbarGroupChanged UI.Events.toolbarGroupChanged}
@@ -114,7 +114,7 @@ export default {
 
 /**
 * Triggered when dropping Outline item.
-* @name UI#dragOutline
+* @name UI#dropOutline
 * @event
 */
 

@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+
 import NotePopup from 'components/NotePopup';
 import NoteState from 'components/NoteState';
 import NoteAccessState from 'components/NoteAccessState';
 import NoteSharedWithCount from "components/NoteSharedWithCount";
 import Icon from 'components/Icon';
 import NoteUnpostedCommentIndicator from 'components/NoteUnpostedCommentIndicator';
+import Choice from 'components/Choice';
+import NoteContext from 'components/Note/Context';
+
 import getLatestActivityDate from 'helpers/getLatestActivityDate';
 import getColor from 'helpers/getColor';
 import { isDarkColorHex, isLightColorHex } from 'helpers/color';
@@ -14,7 +18,6 @@ import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { NotesPanelSortStrategy } from 'constants/sortStrategies';
 import Theme from 'constants/theme';
-import Choice from 'components/Choice';
 
 import './NoteHeader.scss';
 
@@ -41,6 +44,7 @@ const propTypes = {
   handleMultiSelect: PropTypes.func,
   isGroupMember: PropTypes.bool,
   showAnnotationNumbering: PropTypes.bool,
+  isTrackedChange: PropTypes.bool,
 };
 
 function NoteHeader(props) {
@@ -67,9 +71,15 @@ function NoteHeader(props) {
     isGroupMember,
     showAnnotationNumbering,
     timezone,
+    isTrackedChange,
   } = props;
 
   const [t] = useTranslation();
+
+  const {
+    acceptTrackedChange,
+    rejectTrackedChange,
+  } = useContext(NoteContext);
 
   let date;
   const dateCreated = (sortStrategy === NotesPanelSortStrategy.MODIFIED_DATE || (notesShowLastUpdatedDate && sortStrategy !== NotesPanelSortStrategy.CREATED_DATE)) ? getLatestActivityDate(annotation) : annotation.DateCreated;
@@ -122,7 +132,7 @@ function NoteHeader(props) {
               </div>
               {numberOfReplies > 0 && !isSelected &&
                 <div className="num-replies-container">
-                  <Icon className="num-reply-icon" glyph={'icon-chat-bubble'} />
+                  <Icon className="num-reply-icon" glyph='icon-chat-bubble' />
                   <div className="num-replies">{numberOfReplies}</div>
                 </div>}
                 <NoteSharedWithCount annotation={annotation} />
@@ -138,23 +148,41 @@ function NoteHeader(props) {
                   e.stopPropagation();
                   handleMultiSelect(!isMultiSelected);
                 }}
-              />}
+              />
+            }
             <NoteUnpostedCommentIndicator annotationId={annotation.Id} />
             <NoteAccessState annotation={annotation} />
 
-              {!isNoteStateDisabled && !isReply && !isMultiSelectMode && !isGroupMember &&
+            {!isNoteStateDisabled && !isReply && !isMultiSelectMode && !isGroupMember && !isTrackedChange &&
               <NoteState
                 annotation={annotation}
                 isSelected={isSelected}
               />
             }
-            {!isEditing && !isMultiSelectMode && !isGroupMember &&
+            {!isEditing && !isMultiSelectMode && !isGroupMember && !isTrackedChange &&
               <NotePopup
                 noteIndex={noteIndex}
                 annotation={annotation}
                 setIsEditing={setIsEditing}
                 isReply={isReply}
-              />}
+              />
+            }
+            {isTrackedChange &&
+              <>
+                <div
+                  className="tracked-change-icon-wrapper"
+                  onClick={() => acceptTrackedChange(annotation)}
+                >
+                  <Icon className="tracked-change-icon" glyph="icon-menu-checkmark" />
+                </div>
+                <div
+                  className="tracked-change-icon-wrapper"
+                  onClick={() => rejectTrackedChange(annotation)}
+                >
+                  <Icon className="tracked-change-icon" glyph="icon-close" />
+                </div>
+              </>
+            }
           </div>
         </div>
       </div>

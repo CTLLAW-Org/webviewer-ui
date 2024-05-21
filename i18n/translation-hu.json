@@ -72,6 +72,7 @@
     "type": "típus",
     "upload": "Feltöltés",
     "link": "Link",
+    "unlink": "Hivatkozás törlése",
     "fileAttachmentDownload": "Töltse le a csatolt fájlt",
     "prevResult": "Előző eredmény",
     "nextResult": "Következő eredmény",
@@ -82,6 +83,8 @@
     "exit": "Kijárat",
     "addOption": "Opció hozzáadása",
     "formFieldEdit": "Űrlapmező szerkesztése",
+    "formFieldEditMode": "Űrlapmezők szerkesztése",
+    "contentEditMode": "Tartalom szerkesztése",
     "viewShortCutKeysFor3D": "Gyorsbillentyűk megtekintése",
     "markAllRead": "összes megjelölése olvasottként",
     "pageInsertion": "Oldal beillesztése",
@@ -122,7 +125,10 @@
     "clearSignature": "Világos aláírás",
     "newDocument": "Új dokumentum",
     "sideBySideView": "Oldalnézet",
-    "pageNumberInput": "Oldalszám bevitele"
+    "pageNumberInput": "Oldalszám bevitele",
+    "addNewColor": "Új szín hozzáadása",
+    "deleteColor": "A kiválasztott szín törlése",
+    "copySelectedColor": "Másolja a kiválasztott színt"
   },
   "annotation": {
     "areaMeasurement": "Terület",
@@ -284,9 +290,6 @@
     "linkURLorPage": "Link URL vagy oldal",
     "warning": "Figyelem",
     "svgMalicious": "Az SVG-szkriptet a biztonság érdekében figyelmen kívül hagyták",
-    "enterContentEditingMode": "A tartalomszerkesztő módba lép.",
-    "existingAnnotationWarning": "Előfordulhat, hogy a meglévő megjegyzések nem egyeznek a szöveggel a szerkesztés után.",
-    "changesCannotBeUndone": "A végrehajtott változtatások nem vonhatók vissza.",
     "doNotShowAgain": "Ne mutasd ezt még egyszer",
     "doNotAskAgain": "Ne kérdezd meg többször",
     "enterReplacementText": "Írja be a cserélni kívánt szöveget",
@@ -295,6 +298,8 @@
     "unpostedComment": "Nem közzétett megjegyzés",
     "lockedLayer": "A réteg zárolva van",
     "layerVisibililtyNoChange": "A réteg láthatósága nem módosítható",
+    "noLayers": "Ennek a dokumentumnak nincsenek rétegei.",
+    "noSignatureFields": "Ez a dokumentum nem tartalmaz aláírási mezőket.",
     "untitled": "Névtelen",
     "selectHowToLoadFile": "Válassza ki a dokumentum betöltésének módját",
     "openFileByUrl": "Fájl megnyitása URL alapján:",
@@ -366,6 +371,10 @@
     },
     "colorPalette": {
       "colorLabel": "Szín"
+    },
+    "colorPalettePicker": {
+      "addColor": "Új szín hozzáadása",
+      "selectColor": "Válasszon színt"
     },
     "displayMode": {
       "layout": "Oldal elrendezés",
@@ -509,6 +518,9 @@
       "radius": "Sugár",
       "count": "Számol",
       "length": "Hossz"
+    },
+    "freeTextOption": {
+      "autoSizeFont": "A betűméret dinamikus skálázása"
     },
     "measurementOption": {
       "scale": "Skála"
@@ -702,6 +714,7 @@
       "redoChange": "Ismételje meg a megjegyzés módosítását",
       "openFile": "Nyissa meg a fájlválasztót",
       "openSearch": "Nyissa meg a keresési fedvényt",
+      "zoomOptions": "Nagyítási beállítások",
       "zoomIn": "Ráközelíteni",
       "zoomOut": "Kicsinyítés",
       "fitScreenWidth": "Illessze a dokumentumot a képernyő szélességéhez egy kis képernyőn (< 640 képpont), ellenkező esetben illessze az eredeti méretéhez",
@@ -768,6 +781,9 @@
       "deleteTitle": "Egyéni szín törlése",
       "deleteMessage": "Törli a kiválasztott egyéni színt? El lesz távolítva a színpalettáról."
     },
+    "colorPalettePicker": {
+      "deleteTitle": "Egyéni szín törlése"
+    },
     "multiDeleteAnnotation": {
       "title": "Törli a megjegyzéseket?",
       "message": "A törléssel eltávolítja az összes megjegyzést, választ és csoportosítást, és a művelet nem vonható vissza.\n\n Biztosan törli ezeket a kommentárokat?"
@@ -800,7 +816,7 @@
     "select": "(Kilépés)",
     "signature": "(S)",
     "squiggly": "(G)",
-    "image": "(ÉN)",
+    "image": "(I)",
     "redo": "(Ctrl Shift Z)",
     "redo_windows": "(Ctrl Y)",
     "undo": "(Ctrl Z)",
@@ -1165,6 +1181,22 @@
     "increaseIndent": "Behúzás növelése",
     "insertLink": "Link beszúrása",
     "insertImage": "Kép beszúrása",
+    "table": "asztal",
+    "insertRowAbove": "Sor beszúrása fent",
+    "insertRowBelow": "Sor beszúrása alább",
+    "insertColumnRight": "Jobb oldali oszlop beszúrása",
+    "insertColumnLeft": "Oszlop beszúrása balra",
+    "deleteRow": "Sor törlése",
+    "deleteColumn": "Oszlop törlése",
+    "deleteTable": "Táblázat törlése",
+    "deleted": "Törölve:",
+    "added": "Hozzáadva:",
+    "editing": "Szerkesztés",
+    "editingDescription": "Dokumentum szerkesztése",
+    "reviewing": "Áttekintés",
+    "reviewingDescription": "Tegyél javaslatokat",
+    "viewOnly": "Csak megtekintésre",
+    "viewOnlyDescription": "Megtekintés javaslatok nélkül",
     "notSupportedOnMobile": "Az irodai szerkesztés nem támogatott mobileszközökön."
   },
   "insertPageModal": {
@@ -1259,8 +1291,34 @@
   },
   "stylePanel": {
     "headings": {
-      "styles": "Stílusok"
+      "styles": "Stílusok",
+      "annotation": "Annotáció",
+      "annotations": "Annotációk",
+      "tool": "Eszköz",
+      "textStyles": "Szövegstílusok",
+      "currentColor": "Aktuális szín",
+      "customColors": "Egyedi színek",
+      "redactionTextLabel": "Szöveg Címke",
+      "redactionMarkOutline": "Mark Outline",
+      "redactionFill": "Redakció színe",
+      "redactionTextPlaceholder": "Szöveges címke beszúrása",
+      "contentEdit": "Tartalom szerkesztése"
     },
-    "noToolSelected": "Válasszon ki egy eszközt az eszköz tulajdonságainak megtekintéséhez"
+    "addColorToCustom": "Adjon hozzá egyedi színekhez",
+    "noToolSelected": "Válasszon ki egy eszközt az eszköz tulajdonságainak megtekintéséhez",
+    "noToolStyle": "Az eszköz nem tartalmaz stílustulajdonságokat."
+  },
+  "signatureListPanel": {
+    "header": "Aláírások listája",
+    "newSignature": "Új aláírás",
+    "newSignatureAndInitial": "Új aláírás és kezdőbetű",
+    "signatureList": {
+      "signature": "Aláírás",
+      "initials": "Monogram"
+    }
+  },
+  "rubberStampPanel": {
+    "header": "Bélyegek",
+    "standard": "Szabványos bélyegek"
   }
 }

@@ -4,17 +4,36 @@ import selectors from 'selectors';
 import DataElements from 'constants/dataElement';
 
 export default (dispatch, store) => (newTool, oldTool) => {
-  if (oldTool && oldTool.name === 'TextSelect') {
+  const { ToolNames } = window.Core.Tools;
+
+  if (oldTool && oldTool.name === ToolNames.TEXT_SELECT) {
     core.clearSelection();
     dispatch(actions.closeElement('textPopup'));
   }
-
   dispatch(actions.setActiveToolNameAndStyle(newTool));
 
   const state = store.getState();
   const activeToolGroup = selectors.getActiveToolGroup(state);
   const activeToolName = selectors.getActiveToolName(state);
-  if (activeToolName === 'AnnotationEdit' && activeToolGroup === 'signatureTools') {
+  const selectedStampIndex = selectors.getSelectedStampIndex(state);
+  // If we are in the modular UI and switch out of the rubber stamp tool, we need to re-set the active stamp index
+  const isCustomizableUI = state.featureFlags.customizableUI;
+
+  if (isCustomizableUI) {
+    const activeGroupedItems = state.viewer.lastPickedToolAndGroup.group;
+    const isLastPickedGroupUndefined = activeGroupedItems?.every((group) => group === undefined);
+
+    if (oldTool.name === ToolNames.RUBBER_STAMP) {
+      dispatch(actions.setLastSelectedStampIndex(selectedStampIndex));
+      dispatch(actions.setSelectedStampIndex(null));
+    }
+    if (newTool.name === ToolNames.EDIT || isLastPickedGroupUndefined) {
+      return;
+    }
+    dispatch(actions.setActiveGroupedItemWithTool(newTool.name));
+  }
+
+  if (activeToolName === ToolNames.EDIT && (activeToolGroup === 'signatureTools' || activeToolGroup === 'rubberStampTools')) {
     return;
   }
   const { group = '' } = selectors.getToolButtonObject(state, newTool.name);
