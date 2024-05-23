@@ -69,27 +69,12 @@ function NotePopup(props) {
     handleShare();
   }
 
-  /*console.error('----------');
-  console.error('Note Popup');
-  console.error('is editable', isEditable);
-  console.error('is deletable', isDeletable);
-  console.error('is shareable', isShareable);
-  console.error('is reply', isReply);
-  console.error('-----------');*/
-
   if (!isEditable && !isDeletable && !isShareable) {
     return null;
   }
 
-  /*console.error('here 1');*/
-
   const notePopupButtonClass = classNames('overflow note-popup-toggle-trigger', { active: isOpen });
-
-  /*console.error('here 2');*/
-
   const optionsClass = classNames('options note-popup-options', { 'options-reply': isReply });
-
-  /*console.error('here 3 - returning element');*/
 
   return (
     <DataElementWrapper

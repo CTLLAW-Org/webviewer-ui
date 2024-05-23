@@ -106,6 +106,9 @@ function NoteHeader(props) {
   const authorAndDateClass = classNames('author-and-date', { isReply });
   const noteHeaderClass = classNames('NoteHeader', { parent: !isReply && !isGroupMember });
 
+  let showNotePopup = !isMultiSelectMode && !isGroupMember && !isTrackedChange;
+  // let showNotePopup = !isEditing && !isMultiSelectMode && !isGroupMember && !isTrackedChange;
+
   return (
     <div className={noteHeaderClass}>
       {!isReply &&
@@ -135,7 +138,7 @@ function NoteHeader(props) {
                   <Icon className="num-reply-icon" glyph='icon-chat-bubble' />
                   <div className="num-replies">{numberOfReplies}</div>
                 </div>}
-                <NoteSharedWithCount annotation={annotation} />
+              <NoteSharedWithCount annotation={annotation} />
             </div>
           </div>
           <div className="state-and-overflow">
@@ -159,7 +162,7 @@ function NoteHeader(props) {
                 isSelected={isSelected}
               />
             }
-            {!isEditing && !isMultiSelectMode && !isGroupMember && !isTrackedChange &&
+            {showNotePopup &&
               <NotePopup
                 noteIndex={noteIndex}
                 annotation={annotation}

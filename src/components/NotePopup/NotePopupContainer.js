@@ -61,17 +61,6 @@ function NotePopupContainer(props) {
   );
   const isReply = annotation.isReply();
 
-  /*console.error('---------');
-  console.error('Note Popup Container');
-  console.error('editable', isEditable);
-  console.error('deletable', isDeletable);
-  console.error('annotation', annotation);
-  console.error('is reply', annotation?.isReply());
-  console.error('is private', annotation?.getCustomData('isPrivate'));
-  console.error('annotation author', annotation?.Author);
-  console.error('core current user', core.getCurrentUser());
-  console.error('----------');*/
-
   const passProps = {
     handleEdit,
     handleDelete,
@@ -86,16 +75,12 @@ function NotePopupContainer(props) {
   };
 
   // We wrap the element in a div so the tooltip works properly
-  /*return (
+  return (
     <Tooltip content={t('formField.formFieldPopup.options')}>
       <div>
         <NotePopup {...props} {...passProps} />
       </div>
     </Tooltip>
-  );*/
-
-  return (
-    <NotePopup {...props} {...passProps} />
   );
 }
 
